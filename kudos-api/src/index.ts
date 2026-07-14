@@ -1,10 +1,16 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import './config/firebase';
 import './config/groq';
 import chatRoutes from './routes/chat.routes';
 import billingRoutes from './routes/billing.routes';
+import kycRoutes from './routes/kyc.routes';
+import matchmakingRoutes from './routes/matchmaking.routes';
+import authRoutes from './routes/auth.routes';
+import memoryRoutes from './routes/memory.routes';
+import userRoutes from './routes/user.routes';
 import { NudgeService } from './services/ai/nudge.service';
 
 dotenv.config();
@@ -12,6 +18,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 1000 requests per `window` (here, per 15 minutes)
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
 app.use(cors());
 app.use(express.json());
 
@@ -20,22 +34,41 @@ import { SSEService } from './services/sse.service';
 // Global state to track user interaction for smart nudges
 export const AppState = {
   lastInteractionTime: Date.now(),
-  lastActiveWindow: ''
+  lastActiveWindow: '',
+  localMode: false
 };
 
-app.get('/api/stream', (req, res) => {
+// --- Simple SSE Endpoint ---
+app.get('/api/stream', async (req, res) => {
+  const token = req.query.token as string;
+  let userId = 'anonymous';
+
+  if (token) {
+    if (process.env.NODE_ENV !== 'production' && token.startsWith('mock_token')) {
+      userId = token.replace('mock_token', '').replace('_', '') || 'test_founder_1';
+    } else {
+      try {
+        const { auth } = require('./config/firebase');
+        const decodedToken = await auth.verifyIdToken(token);
+        userId = decodedToken.uid;
+      } catch (e) {
+        console.warn('SSE token invalid:', e);
+      }
+    }
+  }
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  SSEService.addClient(res);
+  SSEService.addClient(userId, res);
   
   // Send initial connection success
-  SSEService.broadcast('connected', 'Connected to Kudos Brain');
+  SSEService.emitToUser(userId, 'connected', 'Connected to Kudos Brain');
 
   req.on('close', () => {
-    SSEService.removeClient(res);
+    SSEService.removeClient(userId, res);
   });
 });
 
@@ -47,9 +80,32 @@ setInterval(async () => {
 
     if (idleTimeMinutes > 5) {
       console.log(`[Nudge] User idle for ${Math.round(idleTimeMinutes)} minutes. Generating nudge...`);
-      const nudge = await NudgeService.generateProactiveNudge('test_founder_1', AppState.lastActiveWindow);
+      const nudge = await NudgeService.generateProactiveNudge('test_founder_1', AppState.lastActiveWindow, AppState.localMode);
       SSEService.broadcast('nudge', nudge);
       
+      // Also send FCM push notification to mobile
+      try {
+        const { db } = await import('./config/firebase');
+        const userDoc = await db.collection('users').doc('test_founder_1').get();
+        if (userDoc.exists) {
+          const fcmToken = userDoc.data()?.fcmToken;
+          if (fcmToken) {
+            const { getMessaging } = await import('firebase-admin/messaging');
+            await getMessaging().send({
+              token: fcmToken,
+              notification: {
+                title: 'Kudos',
+                body: nudge
+              },
+              data: { type: 'nudge' }
+            });
+            console.log(`[FCM] Push notification sent to mobile device.`);
+          }
+        }
+      } catch (e: any) {
+        console.warn(`[FCM] Push failed: ${e.message}`);
+      }
+
       // Reset interaction time so we don't spam nudges every 60s
       AppState.lastInteractionTime = Date.now();
     }
@@ -62,8 +118,13 @@ import { verifyAuth } from './middleware/auth';
 app.post('/api/billing/webhook', billingRoutes);
 
 // Protected Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/memory', verifyAuth, memoryRoutes);
 app.use('/api/chat', verifyAuth, chatRoutes);
 app.use('/api/billing', verifyAuth, billingRoutes);
+app.use('/api/kyc', verifyAuth, kycRoutes);
+app.use('/api/matchmaking', verifyAuth, matchmakingRoutes);
+app.use('/api/user', verifyAuth, userRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'kudos-api' });

@@ -1,21 +1,20 @@
 import { getGroqClient } from '../../config/groq';
 import { db, firestoreReady } from '../../config/firebase';
 import { MemoryService } from '../memory/memory.service';
+import ollama from 'ollama';
 
 export class NudgeService {
   /**
    * Generates a proactive nudge message based on the user's current mood and memories.
    */
-  static async generateProactiveNudge(userId: string, activeWindow: string = ''): Promise<string> {
+  static async generateProactiveNudge(userId: string, activeWindow: string = '', localMode: boolean = false): Promise<string> {
     try {
-      const groq = getGroqClient();
-
       // 1. Get recent memory context
-      const memoryContext = await MemoryService.getContextMemories(userId);
+      const memoryContext = await MemoryService.getContextMemories(userId, "", localMode);
 
-      // 2. Get current mood from Firestore (if available)
+      // 2. Get current mood from Firestore (if available and not in strict local mode)
       let currentEmotion = 'neutral';
-      if (firestoreReady) {
+      if (firestoreReady && !localMode) {
         try {
           const stateDoc = await db.collection('users').doc(userId).collection('pet_state').doc('current').get();
           if (stateDoc.exists) {
@@ -47,13 +46,24 @@ Rules:
 5. Do NOT ask them how you can help. Just be a supportive presence.
 6. Write the message as if you are talking to them right now.`;
 
-      const response = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-      });
-      
-      const nudge = response.choices[0]?.message?.content?.trim() || "Just checking in on you! Make sure to stay hydrated.";
+      let nudge = "Just checking in on you! Make sure to stay hydrated.";
+
+      if (localMode) {
+        const response = await ollama.chat({
+          model: 'llama3',
+          messages: [{ role: 'user', content: prompt }],
+          options: { temperature: 0.7 }
+        });
+        nudge = response.message.content.trim() || nudge;
+      } else {
+        const groq = getGroqClient();
+        const response = await groq.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+        });
+        nudge = response.choices[0]?.message?.content?.trim() || nudge;
+      }
 
       return nudge;
     } catch (err: any) {
@@ -62,4 +72,3 @@ Rules:
     }
   }
 }
-

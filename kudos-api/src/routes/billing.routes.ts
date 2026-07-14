@@ -1,5 +1,7 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import Stripe from 'stripe';
+import { verifyAuth } from '../middleware/auth';
+import { db } from '../config/firebase';
 
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
@@ -7,9 +9,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
 });
 
 // Create a checkout session for subscription
-router.post('/create-checkout-session', async (req, res) => {
+router.post('/create-checkout-session', verifyAuth, async (req, res) => {
   try {
-    const { userId, planId } = req.body;
+    const userId = (req as any).user.uid;
+    const { planId } = req.body;
     
     // Hardcoded plan for now, later mapped from DB
     const priceId = planId === 'premium' ? 'price_premium_mock' : 'price_basic_mock';
@@ -39,14 +42,43 @@ router.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// Stripe Webhook
-router.post('/webhook', (req, res) => {
+// Stripe Webhook (Do not use verifyAuth here, it's called by Stripe)
+router.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_mock';
+
+  let event;
   
-  // Webhook handling logic would verify signature here using raw body
-  // For now, we mock the success
-  
-  console.log('Received Stripe Webhook');
+  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_mock') {
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
+    } catch (err: any) {
+      console.error(`Webhook Error: ${err.message}`);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  } else {
+    // Mock event for local dev without real Stripe
+    event = req.body;
+  }
+
+  // Handle the event
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const userId = session.client_reference_id;
+
+    if (userId) {
+      console.log(`Upgrading user ${userId} to Pro plan.`);
+      try {
+        await db.collection('users').doc(userId).set({
+          plan: 'pro',
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (err) {
+        console.error('Failed to update user plan in Firestore', err);
+      }
+    }
+  }
+
   res.json({ received: true });
 });
 

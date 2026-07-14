@@ -32,11 +32,9 @@ export const auth = getAuth();
     console.log('✅ Firestore connected and ready');
   } catch (err: any) {
     if (err.code === 5) {
-      console.error('❌ Firestore NOT_FOUND — The Firestore database likely does not exist yet.');
-      console.error('   → Go to https://console.firebase.google.com/project/kudos-ai-backend/firestore and create the database.');
-      console.error('   → The API will still work, but no data will be persisted.');
+      console.warn('⚠️  Firestore NOT_FOUND: Database not created yet. (Using in-memory mode for local dev)');
     } else {
-      console.error('❌ Firestore connectivity check failed:', err.message);
+      console.warn('⚠️  Firestore connectivity check failed:', err.message);
     }
   }
 })();

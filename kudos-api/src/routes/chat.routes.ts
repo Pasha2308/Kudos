@@ -1,13 +1,15 @@
 import { Router } from 'express';
 import { ConversationService } from '../services/ai/conversation.service';
 import { AppState } from '../index';
+import { verifyAuth } from '../middleware/auth';
 
 const router = Router();
 
 // Endpoint: POST /api/chat/send
-router.post('/send', async (req, res) => {
+router.post('/send', verifyAuth, async (req, res) => {
   try {
-    const { message, userId = 'test_founder_1', mode = 'partner', activeWindow = '' } = req.body;
+    const { message, mode = 'partner', activeWindow = '', localMode = false } = req.body;
+    const userId = (req as any).user.uid;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
@@ -17,7 +19,7 @@ router.post('/send', async (req, res) => {
     AppState.lastInteractionTime = Date.now();
 
     // Pass to AI service
-    const reply = await ConversationService.sendMessage(userId, message, mode, activeWindow);
+    const reply = await ConversationService.sendMessage(userId, message, mode, activeWindow, localMode);
 
     res.json({ reply });
   } catch (error) {
@@ -26,11 +28,26 @@ router.post('/send', async (req, res) => {
   }
 });
 
+// Endpoint: GET /api/chat/history
+router.get('/history', verifyAuth, async (req, res) => {
+  try {
+    const userId = (req as any).user.uid;
+    const history = await ConversationService.getHistory(userId);
+    res.json({ history });
+  } catch (error) {
+    console.error('Chat History Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Endpoint: POST /api/chat/sync
 router.post('/sync', (req, res) => {
-  const { activeWindow, isIdle } = req.body;
+  const { activeWindow, isIdle, localMode } = req.body;
   if (activeWindow !== undefined) {
     AppState.lastActiveWindow = activeWindow;
+  }
+  if (localMode !== undefined) {
+    AppState.localMode = localMode;
   }
   if (!isIdle) {
     AppState.lastInteractionTime = Date.now();

@@ -9,9 +9,10 @@ export const verifyAuth = async (req: Request, res: Response, next: NextFunction
 
   const token = authHeader.split('Bearer ')[1];
   
-  // For local dev without a real firebase token, we can mock it 
-  if (process.env.NODE_ENV !== 'production' && token === 'mock_token') {
-    (req as any).user = { uid: 'test_founder_1' };
+  // Enforce real tokens in production. In development, allow mock_token until Firebase Web is configured.
+  if (process.env.NODE_ENV !== 'production' && token.startsWith('mock_token')) {
+    const uid = token.replace('mock_token', '').replace('_', '') || 'test_founder_1';
+    (req as any).user = { uid: uid, email: `${uid}@example.com` };
     return next();
   }
 

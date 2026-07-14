@@ -2,13 +2,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCurrentWindow, Window, currentMonitor, PhysicalPosition, LogicalSize } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, emit } from '@tauri-apps/api/event';
-import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
+import { enable, disable } from '@tauri-apps/plugin-autostart';
 import './App.css';
 
 // -- Custom Hooks for Sync ---------------------------------------------
-function useSyncedState<T extends string>(key: string, defaultValue: T) {
+function useSyncedState<T = string>(key: string, defaultValue: T) {
   const [value, setValue] = useState<T>(
-    (localStorage.getItem(key) as T) || defaultValue
+    (localStorage.getItem(key) as unknown as T) || defaultValue
   );
   
   useEffect(() => {
@@ -16,7 +16,7 @@ function useSyncedState<T extends string>(key: string, defaultValue: T) {
     if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
       listen<T>(`${key}-changed`, (e) => {
         setValue(e.payload);
-        localStorage.setItem(key, e.payload);
+        localStorage.setItem(key, e.payload as unknown as string);
       }).then(f => { unlistenFn = f; }).catch(() => {});
     }
     
@@ -30,15 +30,15 @@ function useSyncedState<T extends string>(key: string, defaultValue: T) {
     };
   }, [key]);
 
-  const updateValue = async (newValue: T) => {
-    setValue(newValue);
-    localStorage.setItem(key, newValue);
-    window.dispatchEvent(new Event('storage'));
+  const setSyncedValue = (newVal: T) => {
+    setValue(newVal);
+    localStorage.setItem(key, newVal as unknown as string);
     if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-      try { await emit(`${key}-changed`, newValue); } catch {}
+      emit(`${key}-changed`, newVal).catch(() => {});
     }
   };
-  return [value, updateValue] as const;
+
+  return [value, setSyncedValue] as const;
 }
 
 // -- Emotion ? asset mapping ------------------------------------------
@@ -180,29 +180,34 @@ function PetWindow({ onChatToggle }: { onChatToggle?: () => void }) {
   }, [onChatToggle]);
 
   const handleClick = async () => {
-    setPopped(true);
-    setEmotion('happy');
-    setIsMini(false); // Expand on click
-    
-    setTimeout(() => {
-      setPopped(false);
-      setEmotion('neutral');
-    }, 1000);
-
-    if (onChatToggle) { onChatToggle(); return; }
-    try {
-      const chatWin = await Window.getByLabel('kudos-chat');
-      if (chatWin) {
-        const vis = await chatWin.isVisible();
-        if (vis) {
-          await chatWin.hide();
-          setIsMini(true);
-        } else { 
-          await chatWin.show(); 
-          await chatWin.setFocus(); 
-        }
+    const popChat = async () => {
+      const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+      if (!isTauri) {
+        if (onChatToggle) onChatToggle();
+        return;
       }
-    } catch { /* ignore */ }
+      setPopped(true);
+      setEmotion('excited');
+      
+      // Add small delay to let emotion set and CSS register before window opens
+      setTimeout(async () => {
+        try {
+          const chatWin = await Window.getByLabel('kudos-chat');
+          if (chatWin) {
+            await chatWin.show();
+            await chatWin.setFocus();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+        setTimeout(() => {
+          setPopped(false);
+          setEmotion('neutral');
+        }, 800);
+      }, 150);
+    };
+    
+    await popChat();
   };
 
   const glowColor = getGlowColor(emotion);
@@ -253,19 +258,23 @@ const MODES = ['cofounder', 'mentor', 'friend'] as const;
 
 function ChatWindow({ onClose }: { onClose?: () => void }) {
   const [input, setInput]       = useState('');
-  const [history, setHistory]   = useState<Message[]>([
-    { role: 'assistant', content: "Hey ?? I'm Kudos — your companion, vibe-checker, and hype person. What's on your mind?", ts: Date.now() }
-  ]);
+  const [history, setHistory]   = useState<Message[]>([]);
   const [loading, setLoading]   = useState(false);
+  const [userToken, setUserToken] = useSyncedState<string>('kudos-token', '');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  
   const [mode, setMode]         = useState<typeof MODES[number]>('cofounder');
   const [emotion, setEmotion]   = useState('neutral');
   const [slideIn, setSlideIn]   = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
   
-  const [character, setCharacter] = useSyncedState('kudos-character', 'anime-glasses');
+  const [character, setCharacter] = useSyncedState<string>('kudos-character', 'anime-glasses');
   const [position, setPosition]   = useSyncedState<Position>('kudos-position', 'bottom-right');
-  const [theme, setTheme]         = useSyncedState('kudos-theme', 'dark');
-  const [autostart, setAutostart] = useSyncedState('kudos-autostart', 'false');
+  const [theme, setTheme]         = useSyncedState<string>('kudos-theme', 'dark');
+  const [autostart, setAutostart] = useSyncedState<string>('kudos-autostart', 'false');
+  const [localMode, setLocalMode] = useSyncedState<string>('kudos-local-mode', 'false');
   
   const [showSettings, setShowSettings] = useState(false);
   
@@ -274,6 +283,26 @@ function ChatWindow({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => { setTimeout(() => setSlideIn(true), 30); }, []);
 
+  // Fetch History
+  useEffect(() => {
+    if (!userToken) return;
+    fetch('http://localhost:8080/api/chat/history', {
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.history) {
+          const formatted = data.history.map((msg: any) => ({
+            role: msg.role,
+            content: msg.content,
+            ts: msg.ts || Date.now()
+          }));
+          if (formatted.length > 0) setHistory(formatted);
+        }
+      })
+      .catch(() => {});
+  }, [userToken]);
+
   useEffect(() => {
     const es = new EventSource('http://localhost:8080/api/stream');
     es.onmessage = (e) => {
@@ -281,6 +310,13 @@ function ChatWindow({ onClose }: { onClose?: () => void }) {
         const data = JSON.parse(e.data);
         if (data.type === 'emotion') setEmotion(data.message);
         if (data.type === 'nudge') addMsg({ role: 'assistant', content: data.message });
+        if (data.type === 'chat-message') {
+          const msg = data.message;
+          setHistory(prev => {
+            if (prev.some(m => m.content === msg.content && m.role === msg.role)) return prev;
+            return [...prev, { role: msg.role, content: msg.content, ts: msg.ts }];
+          });
+        }
       } catch { /* ignore */ }
     };
     return () => es.close();
@@ -310,9 +346,9 @@ function ChatWindow({ onClose }: { onClose?: () => void }) {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer mock_token'
+          'Authorization': `Bearer ${userToken}`
         },
-        body: JSON.stringify({ message: text, userId: 'test_founder_1', mode, activeWindow }),
+        body: JSON.stringify({ message: text, mode, activeWindow, localMode: localMode === 'true' }),
       });
       const data = await res.json();
       addMsg({ role: 'assistant', content: data.reply ?? "Something went wrong ??" });
@@ -359,11 +395,118 @@ function ChatWindow({ onClose }: { onClose?: () => void }) {
         </div>
 
         <div className="chat-header-right" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+          <button className="icon-btn" onClick={() => setShowSettings(true)}>⚙️</button>
+          <button 
+            className={`privacy-btn ${privacyMode ? 'active' : ''}`}
+            onClick={() => setPrivacyMode(!privacyMode)}
+            title={privacyMode ? "Privacy Mode On (Screen Hidden)" : "Privacy Mode Off (Screen Shared)"}
+          >
+            {privacyMode ? '🙈' : '👁️'}
+          </button>
           
-          <div className="settings-dropdown">
-            <button className="icon-btn" onClick={() => setShowSettings(!showSettings)}>??</button>
-            {showSettings && (
-              <div className="settings-menu">
+          <button className="min-btn" onClick={async () => {
+            try { await getCurrentWindow().minimize(); } catch { /* ignore for web preview */ }
+          }} aria-label="Minimize">_</button>
+          <button className="close-btn" onClick={close} aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      {!userToken ? (
+        <div className="login-container" style={{ padding: 24, display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <h2 style={{ marginBottom: 8 }}>Welcome to Kudos</h2>
+          <p style={{ color: '#a3a3a3', marginBottom: 32 }}>Sign in to your AI companion</p>
+          <div style={{ background: '#171717', padding: 24, borderRadius: 16, width: '100%', maxWidth: 300, border: '1px solid #262626' }}>
+            <input 
+              type="text" 
+              placeholder="Email address" 
+              value={loginEmail}
+              onChange={e => setLoginEmail(e.target.value)}
+              style={{ width: '100%', padding: 12, borderRadius: 8, background: '#0a0a0a', border: '1px solid #262626', color: 'white', marginBottom: 16 }}
+            />
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={loginPassword}
+              onChange={e => setLoginPassword(e.target.value)}
+              style={{ width: '100%', padding: 12, borderRadius: 8, background: '#0a0a0a', border: '1px solid #262626', color: 'white', marginBottom: 24 }}
+            />
+            <button 
+              onClick={async () => {
+                if (!loginEmail || !loginPassword) return;
+                setLoginLoading(true);
+                try {
+                  const uid = loginEmail.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+                  const token = `mock_token_${uid}`;
+                  const res = await fetch('http://localhost:8080/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ email: loginEmail, name: uid })
+                  });
+                  if (res.ok) setUserToken(token);
+                } catch { } finally { setLoginLoading(false); }
+              }}
+              style={{ width: '100%', padding: 12, borderRadius: 8, background: 'linear-gradient(45deg, #10b981, #0ea5e9)', border: 'none', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              {loginLoading ? 'Loading...' : 'Continue'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="chat-messages">
+            {history.map((msg, i) => (
+              <div key={i} className={`msg-wrap ${msg.role === 'user' ? 'msg-wrap-user' : 'msg-wrap-ai'}`}>
+                <div className={`msg-bubble ${msg.role === 'user' ? 'msg-user' : 'msg-ai'}`}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="msg-wrap msg-wrap-ai">
+                <div className="msg-bubble msg-ai loading-dots">
+                  <span/><span/><span/>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} style={{ height: 1 }} />
+          </div>
+
+          <div className="chat-input-area drag-region">
+            <div className="chat-input-wrapper" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Message Kudos..."
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') send(); }}
+              />
+              <button className="send-btn" onClick={send} disabled={!input.trim() || loading}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
+            <div className="mode-selector" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+              {MODES.map(m => (
+                <button key={m} className={`mode-btn ${mode === m ? 'active' : ''}`} onClick={() => setMode(m)}>
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+        {showSettings && (
+          <div className="settings-overlay">
+            <div className="settings-modal">
+              <div className="settings-modal-header">
+                <h3>Preferences</h3>
+                <button className="close-btn" onClick={() => setShowSettings(false)}>?</button>
+              </div>
+              <div className="settings-content">
                 <div className="settings-row">
                   <label>Character:</label>
                   <select className="character-select" value={character} onChange={e => setCharacter(e.target.value)}>
@@ -403,21 +546,22 @@ function ChatWindow({ onClose }: { onClose?: () => void }) {
                     <option value="true">On</option>
                   </select>
                 </div>
+                <div className="settings-row">
+                  <label>Privacy:</label>
+                  <select className="character-select" value={localMode} onChange={e => setLocalMode(e.target.value)}>
+                    <option value="false">Cloud AI (Fast)</option>
+                    <option value="true">Local Mode (Ollama)</option>
+                  </select>
+                </div>
+                <div className="settings-row" style={{ marginTop: 16 }}>
+                  <button onClick={() => { setUserToken(''); setShowSettings(false); }} style={{ width: '100%', padding: '12px', background: '#ef4444', color: 'white', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                    Log Out
+                  </button>
+                </div>
               </div>
-            )}
+            </div>
           </div>
-
-          <button 
-            className={`privacy-btn ${privacyMode ? 'active' : ''}`}
-            onClick={() => setPrivacyMode(!privacyMode)}
-            title={privacyMode ? "Privacy Mode On (Screen Hidden)" : "Privacy Mode Off (Screen Shared)"}
-          >
-            {privacyMode ? '??' : '???'}
-          </button>
-          
-          <button className="close-btn" onClick={close} aria-label="Close">?</button>
-        </div>
-      </div>
+        )}
 
       <div className="chat-messages">
         {history.map((msg, i) => (
@@ -455,18 +599,21 @@ function ChatWindow({ onClose }: { onClose?: () => void }) {
           onKeyDown={e => e.key === 'Enter' && send()}
           autoFocus
         />
-        <button
-          className={`send-btn ${loading ? 'loading' : ''}`}
-          onClick={send}
-          disabled={loading}
-          aria-label="Send"
-        >
-          {loading ? '...' : '?'}
+        <button className={`send-btn ${loading ? 'loading' : ''}`} onClick={send} disabled={!input.trim() || loading}>
+          ➤
         </button>
+        </div>
+        <div className="resize-handle" onMouseDown={async (e) => {
+          if (e.buttons === 1) {
+            try {
+              const { getCurrentWindow } = await import('@tauri-apps/api/window');
+              getCurrentWindow().startDragging(); // Start dragging isn't perfectly for resizing, but tauri handles resize via decorations. We will just use the visual indicator as native Tauri resizes borderless correctly on edges if resizable: true
+            } catch {}
+          }
+        }} />
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 // -----------------------------------------------------------------------
 //  ROOT
@@ -476,7 +623,10 @@ function App() {
   const [isTauri, setIsTauri]         = useState(true);
   const [chatOpen, setChatOpen]       = useState(false);
 
-  const [theme] = useSyncedState('kudos-theme', 'dark');
+  const [theme, setTheme] = useSyncedState<string>('kudos-theme', 'dark');
+  const [localMode] = useSyncedState<string>('kudos-local-mode', 'false');
+  const [userToken] = useSyncedState<string>('kudos-token', '');
+  const [, setCharacter] = useSyncedState<string>('kudos-character', 'anime-glasses');
 
   const lastActiveWindowRef = useRef<string>('');
   const lastIsIdleRef = useRef<boolean>(false);
@@ -484,6 +634,30 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // -- SSE Sync --
+  useEffect(() => {
+    if (!userToken) return;
+    
+    const es = new EventSource(`http://localhost:8080/api/stream?token=${userToken}`);
+    
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'preferences-updated' && data.message) {
+          if (data.message.theme) setTheme(data.message.theme);
+          if (data.message.avatar) setCharacter(data.message.avatar);
+          // persona maps to mode in desktop but desktop doesn't use it globally, just in ChatWindow
+        }
+      } catch (e) {
+        console.error('SSE Error:', e);
+      }
+    };
+
+    return () => {
+      es.close();
+    };
+  }, [userToken]);
 
   useEffect(() => {
     try {
@@ -504,9 +678,9 @@ function App() {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer mock_token'
+                'Authorization': `Bearer ${userToken || 'mock_token'}`
               },
-              body: JSON.stringify({ activeWindow: title, isIdle }),
+              body: JSON.stringify({ activeWindow: title, isIdle, localMode: localMode === 'true' }),
             });
           }
         } catch { /* ignore */ }
