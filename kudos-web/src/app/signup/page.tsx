@@ -6,14 +6,33 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [error, setError] = useState('');
+  const { signup } = useAuth();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
     setLoading(true);
-    await login(email, name);
+    setError('');
+    try {
+      await signup(email, password, name);
+    } catch (err: any) {
+      setError(err.message || 'Failed to register');
+      setLoading(false);
+    }
   };
 
   return (
@@ -23,6 +42,13 @@ export default function SignupPage() {
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">Join Kudos</h1>
           <p className="text-neutral-400 mt-2">Create your account to get started</p>
         </div>
+        
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm text-center">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSignup} className="space-y-6">
           <div>
             <label className="block text-sm font-medium mb-2 text-neutral-300">Name</label>
@@ -54,6 +80,24 @@ export default function SignupPage() {
               required 
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium mb-2 text-neutral-300">Confirm Password</label>
+            <input 
+              type="password" 
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-neutral-800 border border-white/5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all text-white"
+              required 
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="terms" required className="rounded bg-neutral-800 border-white/10 text-purple-500 focus:ring-purple-500 focus:ring-offset-neutral-900" />
+            <label htmlFor="terms" className="text-xs text-neutral-400">
+              I agree to the <a href="#" className="text-purple-400 hover:underline">Terms of Service</a> and <a href="#" className="text-purple-400 hover:underline">Privacy Policy</a>
+            </label>
+          </div>
+
           <button type="submit" disabled={loading} className="w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all shadow-[0_0_20px_rgba(168,85,247,0.2)] disabled:opacity-50">
             {loading ? 'Creating Account...' : 'Create Account'}
           </button>

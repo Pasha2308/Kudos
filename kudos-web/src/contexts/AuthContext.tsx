@@ -12,7 +12,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, name?: string) => Promise<void>;
+  login: (email: string, password?: string) => Promise<void>;
+  signup: (email: string, password?: string, name?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   login: async () => {},
+  signup: async () => {},
   logout: () => {},
 });
 
@@ -50,29 +52,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
-  const login = async (email: string, name?: string) => {
-    const uid = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
-    const token = `mock_token_${uid}`;
+  const login = async (email: string, password?: string) => {
+    // If no password provided (legacy dev mode), use email as password
+    const loginPassword = password || email; 
     
-    // Register the user on the backend
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ email, name: name || uid })
-      });
-    } catch (e) {
-      console.error('Failed to register user to backend', e);
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const res = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password: loginPassword })
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to login');
     }
 
-    const newUser = { uid, email, name: name || uid, token };
+    const data = await res.json();
+    const newUser = { uid: data.user.uid, email: data.user.email, name: data.user.name, token: data.token };
+    
     setUser(newUser);
     localStorage.setItem('kudos_user', JSON.stringify(newUser));
     router.push('/dashboard');
+  };
+
+  const signup = async (email: string, password?: string, name?: string) => {
+    const signupPassword = password || email;
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const res = await fetch(`${API_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password: signupPassword, name })
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to register');
+    }
+
+    const data = await res.json();
+    const newUser = { uid: data.user.uid, email: data.user.email, name: data.user.name, token: data.token };
+    
+    setUser(newUser);
+    localStorage.setItem('kudos_user', JSON.stringify(newUser));
+    router.push('/onboarding');
   };
 
   const logout = () => {
@@ -82,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,17 +2,26 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await login(email);
+    setError('');
+    try {
+      await login(email, password);
+    } catch (err: any) {
+      setError(err.message || 'Failed to login');
+      setLoading(false);
+    }
   };
 
   return (
@@ -22,6 +31,13 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Welcome back</h1>
           <p className="text-neutral-400 mt-2">Sign in to your Kudos account</p>
         </div>
+        
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm text-center">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-sm font-medium mb-2 text-neutral-300">Email</label>
@@ -34,7 +50,10 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2 text-neutral-300">Password</label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-neutral-300">Password</label>
+              <button type="button" className="text-xs text-indigo-400 hover:text-indigo-300">Forgot password?</button>
+            </div>
             <input 
               type="password" 
               value={password}

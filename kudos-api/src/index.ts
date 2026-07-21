@@ -17,6 +17,10 @@ import roomsRoutes from './routes/rooms.routes';
 import kudosRoutes from './routes/kudos.routes';
 import connectionHealthRoutes from './routes/connection-health.routes';
 import builderRoutes from './routes/builder.routes';
+import settingsRoutes from './routes/settings.routes';
+import notificationRoutes from './routes/notification.routes';
+import dmRoutes from './routes/dm.routes';
+import searchRoutes from './routes/search.routes';
 import { NudgeService } from './services/ai/nudge.service';
 
 dotenv.config();
@@ -139,6 +143,10 @@ app.use('/api/rooms', verifyAuth, roomsRoutes);
 app.use('/api/kudos', verifyAuth, kudosRoutes);
 app.use('/api/health', verifyAuth, connectionHealthRoutes);
 app.use('/api/builder', verifyAuth, builderRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/dm', dmRoutes);
+app.use('/api/search', searchRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'kudos-api' });

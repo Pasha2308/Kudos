@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from '../config/firebase';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'kudos-dev-secret-key-2026';
 
 export const verifyAuth = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -15,12 +18,19 @@ export const verifyAuth = async (req: Request, res: Response, next: NextFunction
     (req as any).user = { uid: uid, email: `${uid}@example.com` };
     return next();
   }
-
+  // Fallback to real JWT verify
   try {
-    const decodedToken = await auth.verifyIdToken(token);
+    const decodedToken = jwt.verify(token, JWT_SECRET);
     (req as any).user = decodedToken;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    // If not a valid JWT, try Firebase Auth (for any legacy tokens)
+    try {
+      const decodedFbToken = await auth.verifyIdToken(token);
+      (req as any).user = decodedFbToken;
+      next();
+    } catch (fbError) {
+      res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    }
   }
 };

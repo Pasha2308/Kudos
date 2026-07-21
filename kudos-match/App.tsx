@@ -1,7 +1,7 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, Modal } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -166,13 +166,11 @@ function ChatScreen() {
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
-}
-
-function HumansScreen() {
+  );function HumansScreen() {
   const { apiUrl, userToken } = useContext(SettingsContext);
   const [intros, setIntros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchIntros = async () => {
@@ -192,6 +190,8 @@ function HumansScreen() {
     };
     fetchIntros();
   }, [apiUrl, userToken]);
+  
+  const filteredIntros = intros.filter(h => h.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -199,12 +199,21 @@ function HumansScreen() {
         <Text style={styles.title}>Humans</Text>
         <Text style={styles.subtitle}>Warm intros based on trust, not metrics.</Text>
 
+        <TextInput 
+          style={[styles.input, { marginBottom: 16 }]} 
+          placeholder="Search humans..." 
+          placeholderTextColor={THEME.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+
         {loading ? (
           <View style={styles.center}><ActivityIndicator color={THEME.primary} size="large" /></View>
         ) : (
           <FlatList
-            data={intros}
+            data={filteredIntros}
             keyExtractor={item => item.id}
+            ListEmptyComponent={<Text style={{ color: THEME.textMuted, textAlign: 'center', marginTop: 40 }}>No humans found.</Text>}
             renderItem={({ item }) => (
               <View style={styles.card}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -238,6 +247,7 @@ function RoomsScreen() {
   const { apiUrl, userToken } = useContext(SettingsContext);
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -250,13 +260,15 @@ function RoomsScreen() {
         else throw new Error('No rooms');
       } catch (err) {
         setRooms([
-          { id: 'room_midnight_builders', name: 'Midnight Builders', emoji: '🌙', description: 'Solo founders who build at night.', activeCount: 2, daysRemaining: 25 },
+          { id: 'room_midnight_builders', name: 'Midnight Builders', emoji: '🌃', description: 'Solo founders who build at night.', activeCount: 2, daysRemaining: 25 },
           { id: 'room_overthinkers', name: 'Overthinkers Club', emoji: '💭', description: 'People who process life through long conversations.', activeCount: 3, daysRemaining: 28 },
         ]);
       } finally { setLoading(false); }
     };
     fetchRooms();
   }, [apiUrl, userToken]);
+
+  const filteredRooms = rooms.filter(r => r.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -269,12 +281,21 @@ function RoomsScreen() {
         </View>
         <Text style={styles.subtitle}>Small group spaces. Closes in 30 days.</Text>
 
+        <TextInput 
+          style={[styles.input, { marginBottom: 16 }]} 
+          placeholder="Search rooms..." 
+          placeholderTextColor={THEME.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+
         {loading ? (
           <View style={styles.center}><ActivityIndicator color={THEME.primary} size="large" /></View>
         ) : (
           <FlatList
-            data={rooms}
+            data={filteredRooms}
             keyExtractor={item => item.id}
+            ListEmptyComponent={<Text style={{ color: THEME.textMuted, textAlign: 'center', marginTop: 40 }}>No rooms found.</Text>}
             renderItem={({ item }) => (
               <TouchableOpacity style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 16 }]} onPress={() => Alert.alert('Enter Room', 'Navigating to room chat...')}>
                 <Text style={{ fontSize: 32 }}>{item.emoji}</Text>
@@ -356,40 +377,145 @@ function KudosScreen() {
   );
 }
 
-function ProfileScreen() {
-  const { userToken, setUserToken } = useContext(SettingsContext);
+function SettingsScreen() {
+  const { userToken, setUserToken, apiUrl } = useContext(SettingsContext);
+  const [settings, setSettings] = useState({
+    theme: 'system',
+    chatDensity: 'comfortable',
+    emailNotifications: true,
+    pushNotifications: false,
+    privacyOnlineStatus: true,
+  });
+  
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    fetchWithTimeout(`${apiUrl}/api/settings`, {
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    })
+      .then(r => r.json())
+      .then(d => { if (d.settings) setSettings(d.settings); })
+      .catch(() => {});
+      
+    fetchWithTimeout(`${apiUrl}/api/notifications`, {
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    })
+      .then(r => r.json())
+      .then(d => { if (d.notifications) setNotifications(d.notifications); })
+      .catch(() => {});
+  }, []);
+
+  const updateSetting = (key: string, value: any) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    fetchWithTimeout(`${apiUrl}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+      body: JSON.stringify({ settings: newSettings })
+    }).catch(() => {});
+  };
+
+  const markAllRead = () => {
+    fetchWithTimeout(`${apiUrl}/api/notifications/read-all`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    }).catch(() => {});
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('@kudos_token');
     setUserToken(null);
   };
+  
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Profile</Text>
-        <Text style={styles.subtitle}>Your connection health.</Text>
+      <ScrollView style={styles.content}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.title}>Settings</Text>
+          <TouchableOpacity onPress={() => setShowNotifications(true)} style={{ position: 'relative' }}>
+            <Text style={{ fontSize: 24 }}>🔔</Text>
+            {unreadCount > 0 && (
+              <View style={{ position: 'absolute', top: -4, right: -4, backgroundColor: 'red', borderRadius: 8, paddingHorizontal: 4, minWidth: 16, alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>{unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+        
+        <Modal visible={showNotifications} animationType="slide" presentationStyle="pageSheet">
+          <SafeAreaView style={{ flex: 1, backgroundColor: THEME.bg }}>
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: THEME.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: THEME.text, fontSize: 20, fontWeight: 'bold' }}>Notifications</Text>
+              <TouchableOpacity onPress={() => setShowNotifications(false)}>
+                <Text style={{ color: THEME.primary, fontSize: 16 }}>Close</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ flex: 1 }}>
+              {notifications.length === 0 ? (
+                <Text style={{ color: THEME.textMuted, textAlign: 'center', marginTop: 40 }}>No notifications yet</Text>
+              ) : (
+                notifications.map(n => (
+                  <View key={n.id} style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: THEME.border, backgroundColor: n.isRead ? THEME.bg : THEME.surface }}>
+                    <Text style={{ color: THEME.text, fontWeight: n.isRead ? 'normal' : 'bold' }}>{n.title}</Text>
+                    <Text style={{ color: THEME.textMuted, marginTop: 4 }}>{n.message}</Text>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+            {unreadCount > 0 && (
+              <TouchableOpacity style={[styles.primaryBtn, { margin: 16, backgroundColor: THEME.surface2 }]} onPress={markAllRead}>
+                <Text style={[styles.primaryBtnText, { color: THEME.primary }]}>Mark All as Read</Text>
+              </TouchableOpacity>
+            )}
+          </SafeAreaView>
+        </Modal>
+        
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Appearance</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
+            <Text style={{ color: THEME.text }}>Theme</Text>
+            <Text style={{ color: THEME.textMuted, textTransform: 'capitalize' }}>{settings.theme}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
+            <Text style={{ color: THEME.text }}>Chat Density</Text>
+            <Text style={{ color: THEME.textMuted, textTransform: 'capitalize' }}>{settings.chatDensity}</Text>
+          </View>
+        </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Anti-Loneliness Score</Text>
-          <View style={{ alignItems: 'center', marginVertical: 24 }}>
-            <View style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 8, borderColor: THEME.primary, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 32, fontWeight: 'bold', color: THEME.text }}>74</Text>
-            </View>
-            <Text style={{ color: THEME.textMuted, marginTop: 12 }}>Growing</Text>
+          <Text style={styles.cardTitle}>Notifications</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+            <Text style={{ color: THEME.text }}>Push Notifications</Text>
+            <TouchableOpacity onPress={() => updateSetting('pushNotifications', !settings.pushNotifications)}>
+              <Text style={{ color: settings.pushNotifications ? THEME.primary : THEME.textMuted }}>{settings.pushNotifications ? 'ON' : 'OFF'}</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={{ color: THEME.text, textAlign: 'center', fontStyle: 'italic' }}>You're building something real.</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+            <Text style={{ color: THEME.text }}>Email Digests</Text>
+            <TouchableOpacity onPress={() => updateSetting('emailNotifications', !settings.emailNotifications)}>
+              <Text style={{ color: settings.emailNotifications ? THEME.primary : THEME.textMuted }}>{settings.emailNotifications ? 'ON' : 'OFF'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Privacy</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+            <Text style={{ color: THEME.text }}>Show Online Status</Text>
+            <TouchableOpacity onPress={() => updateSetting('privacyOnlineStatus', !settings.privacyOnlineStatus)}>
+              <Text style={{ color: settings.privacyOnlineStatus ? THEME.primary : THEME.textMuted }}>{settings.privacyOnlineStatus ? 'ON' : 'OFF'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={[styles.card, { marginTop: 16 }]}>
-          <Text style={styles.cardTitle}>Builder Profile</Text>
-          <Text style={styles.infoText}>Available on Kudos Web Dashboard.</Text>
-        </View>
-
-        <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: '#ef4444', marginTop: 24 }]} onPress={handleLogout}>
+        <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: '#ef4444', marginTop: 24, marginBottom: 40 }]} onPress={handleLogout}>
           <Text style={styles.primaryBtnText}>Log Out</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -399,36 +525,39 @@ function ProfileScreen() {
 function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
   const { apiUrl } = useContext(SettingsContext);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignup, setIsSignup] = useState(true);
 
   const handleAuth = async () => {
-    if (!email) return;
+    if (!email || !password) {
+      Alert.alert('Error', 'Email and password are required');
+      return;
+    }
     setLoading(true);
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      const uid = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
-      const token = `mock_token_${uid}`;
       
-      const res = await fetchWithTimeout(`${apiUrl}/api/auth/register`, {
+      const endpoint = isSignup ? '/api/auth/register' : '/api/auth/login';
+      const body = isSignup ? { email, password, name } : { email, password };
+      
+      const res = await fetchWithTimeout(`${apiUrl}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ email, name: name || uid })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       });
       
-      if (res.ok) {
-        await AsyncStorage.setItem('@kudos_token', token);
-        onLogin(token);
+      const data = await res.json();
+      
+      if (res.ok && data.token) {
+        await AsyncStorage.setItem('@kudos_token', data.token);
+        onLogin(data.token);
       } else {
-        Alert.alert('Error', 'Authentication failed');
+        Alert.alert('Authentication failed', data.error || 'Something went wrong');
       }
-    } catch (err) {
-      // Allow bypass in dev
-      const uid = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
-      const token = `mock_token_${uid}`;
-      await AsyncStorage.setItem('@kudos_token', token);
-      onLogin(token);
+    } catch (err: any) {
+      Alert.alert('Network Error', 'Could not connect to the server. Check your network or API URL.');
     } finally {
       setLoading(false);
     }
@@ -449,6 +578,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
               <TextInput style={styles.input} placeholder="What should I call you?" placeholderTextColor={THEME.textMuted} value={name} onChangeText={setName} />
             )}
             <TextInput style={[styles.input, { marginTop: 16 }]} placeholder="Email address" placeholderTextColor={THEME.textMuted} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+            <TextInput style={[styles.input, { marginTop: 16 }]} placeholder="Password" placeholderTextColor={THEME.textMuted} value={password} onChangeText={setPassword} secureTextEntry />
             
             <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: THEME.primary, marginTop: 24 }]} onPress={handleAuth} disabled={loading}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>{isSignup ? 'Start for Free' : 'Log In'}</Text>}
@@ -460,6 +590,58 @@ function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
           </View>
         </View>
       </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+function MessagesScreen() {
+  const { apiUrl, userToken } = useContext(SettingsContext);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchWithTimeout(`${apiUrl}/api/dm`, {
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.conversations) setConversations(d.conversations);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Messages</Text>
+        <Text style={styles.subtitle}>Direct messages with humans.</Text>
+        
+        {loading ? (
+          <ActivityIndicator color={THEME.primary} style={{ marginTop: 40 }} />
+        ) : (
+          <FlatList
+            data={conversations}
+            keyExtractor={item => item.id}
+            ListEmptyComponent={<Text style={{ color: THEME.textMuted, textAlign: 'center', marginTop: 40 }}>No conversations yet.</Text>}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.card} onPress={() => Alert.alert('Chat', 'Chat view coming soon.')}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: THEME.surface2, marginRight: 12, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20 }}>👤</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>{item.participants.find((p: any) => p !== 'current') || 'Human'}</Text>
+                    <Text style={{ color: THEME.textMuted, fontSize: 13 }} numberOfLines={1}>
+                      {item.lastMessage || 'No messages'}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -495,10 +677,11 @@ export default function App() {
               }}
             >
               <Tab.Screen name="Chat" component={ChatScreen} options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>💬</Text> }} />
+              <Tab.Screen name="DMs" component={MessagesScreen} options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>✉️</Text> }} />
               <Tab.Screen name="Humans" component={HumansScreen} options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>👥</Text> }} />
               <Tab.Screen name="Rooms" component={RoomsScreen} options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>🌐</Text> }} />
               <Tab.Screen name="Kudos" component={KudosScreen} options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>💛</Text> }} />
-              <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>🪪</Text> }} />
+              <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>⚙️</Text> }} />
             </Tab.Navigator>
           </NavigationContainer>
         ) : (

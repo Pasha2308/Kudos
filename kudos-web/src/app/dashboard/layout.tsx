@@ -3,14 +3,19 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { NotificationBell } from '@/components/NotificationBell';
+import { CommandPalette } from '@/components/CommandPalette';
 
 const NAV = [
   { href: '/dashboard', icon: '🏠', label: 'Home' },
-  { href: '/dashboard/chat', icon: '💬', label: 'Companion Chat', dot: true },
+  { href: '/dashboard/messages', icon: '💬', label: 'Messages' },
   { href: '/dashboard/humans', icon: '👥', label: 'Humans' },
   { href: '/dashboard/rooms', icon: '🌐', label: 'Rooms', badgeKey: 'roomsBadge' },
   { href: '/dashboard/kudos', icon: '💛', label: 'Kudos Moments', badgeKey: 'kudosBadge' },
   { href: '/dashboard/builder', icon: '🎯', label: 'Builder Tools' },
+  { href: '/dashboard/activity', icon: '⚡', label: 'Activity' },
+  { href: '/dashboard/insights', icon: '📈', label: 'Insights' },
+  { href: '/dashboard/settings', icon: '⚙️', label: 'Settings' },
   { href: '/dashboard/profile', icon: '🪪', label: 'Profile' },
 ];
 
@@ -100,6 +105,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="health-bar-track">
             <div className="health-bar-fill" style={{ width: `${health.score}%` }} />
           </div>
+          </div>
           {health.conversationStreak > 0 && (
             <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 6 }}>🔥 {health.conversationStreak} day streak</p>
           )}
@@ -114,8 +120,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ─── Main Content ─── */}
-      <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1, minHeight: '100vh' }}>
-        {children}
+      <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <header className="h-16 border-b border-white/5 flex items-center justify-end px-8 gap-4 bg-neutral-950 sticky top-0 z-10">
+          <NotificationBell />
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px]">
+            <div className="w-full h-full rounded-full bg-neutral-900 border border-transparent overflow-hidden">
+              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} alt="avatar" />
+            </div>
+          </div>
+        </header>
+        <div className="flex-1">
+          {children}
+        </div>
+        <CommandPalette />
       </main>
     </div>
   );
