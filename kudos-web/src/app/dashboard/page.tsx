@@ -118,10 +118,10 @@ export default function DashboardHome() {
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', height: '100vh', overflow: 'hidden' }}>
-      {/* ─── LEFT: Companion Chat Panel ─── */}
+      {/* 🔮 LEFT: Companion Chat Panel 🔮 */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', borderRight: '1px solid var(--border)' }}>
         {/* Chat Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-1)', flexShrink: 0 }}>
+        <div className="backdrop-blur-xl bg-white/5" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div className="companion-orb" style={{ width: 40, height: 40, flexShrink: 0 }} />
             <div>
@@ -196,7 +196,7 @@ export default function DashboardHome() {
         </div>
 
         {/* Input */}
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, background: 'var(--surface-1)' }}>
+        <div className="backdrop-blur-xl bg-white/5" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}>
           <input
             className="input"
             placeholder="Talk to your companion..."

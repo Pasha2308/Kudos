@@ -1,13 +1,15 @@
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap');
 
 /* ─── Design Tokens ──────────────────────────────────────────── */
 :root {
-  --bg:           #07070f;
-  --surface-1:    #0f0f1a;
-  --surface-2:    #161626;
-  --surface-3:    #1e1e32;
-  --border:       rgba(255,255,255,0.07);
-  --border-active:rgba(255,255,255,0.15);
+  --bg:           #05050A; /* Extremely dark, almost black */
+  --surface-1:    rgba(15, 15, 26, 0.4); /* Translucent */
+  --surface-2:    rgba(22, 22, 38, 0.6);
+  --surface-3:    rgba(30, 30, 50, 0.8);
+  --border:       rgba(255,255,255,0.06);
+  --border-active:rgba(255,255,255,0.12);
+  --glass-blur:   blur(24px);
 
   --primary:      #6366f1;
   --primary-glow: rgba(99,102,241,0.3);
@@ -43,7 +45,10 @@
 html { font-size: 16px; scroll-behavior: smooth; }
 
 body {
-  background: var(--bg);
+  background: radial-gradient(circle at top right, rgba(67, 56, 202, 0.15), transparent 40%),
+              radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.1), transparent 40%),
+              var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   font-family: 'Inter', sans-serif;
   line-height: 1.6;
@@ -82,6 +87,8 @@ h1, h2, h3, h4, h5 { font-family: 'Outfit', sans-serif; line-height: 1.2; }
   width: var(--sidebar-w);
   min-height: 100vh;
   background: var(--surface-1);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-right: 1px solid var(--border);
   position: fixed;
   top: 0; left: 0;
@@ -103,14 +110,18 @@ h1, h2, h3, h4, h5 { font-family: 'Outfit', sans-serif; line-height: 1.2; }
 /* ─── Cards ──────────────────────────────────────────────────── */
 .card {
   background: var(--surface-1);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.card:hover { border-color: var(--border-active); }
+.card:hover { border-color: var(--border-active); transform: translateY(-2px); box-shadow: var(--shadow-elevated); }
 .card-elevated {
   background: var(--surface-2);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-elevated);
@@ -177,7 +188,9 @@ h1, h2, h3, h4, h5 { font-family: 'Outfit', sans-serif; line-height: 1.2; }
   font-size: 0.9375rem;
   padding: 13px 16px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 .input::placeholder { color: var(--text-muted); }
 .input:focus { border-color: var(--primary); box-shadow: var(--glow-sm); }
@@ -249,7 +262,11 @@ h1, h2, h3, h4, h5 { font-family: 'Outfit', sans-serif; line-height: 1.2; }
   transition: all 0.15s;
   position: relative;
 }
-.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav-item:hover { 
+  background: rgba(255,255,255,0.03); 
+  color: var(--text); 
+  transform: translateX(4px); 
+}
 .nav-item.active {
   background: rgba(99,102,241,0.12);
   color: var(--primary);

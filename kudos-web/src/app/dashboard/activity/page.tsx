@@ -21,7 +21,7 @@ export default function ActivityPage() {
 
       <div className="space-y-4">
         {activities.map((item) => (
-          <div key={item.id} className="bg-neutral-900 border border-white/5 rounded-xl p-5 flex items-start gap-4 hover:bg-neutral-800 transition-colors">
+          <div key={item.id} className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-5 flex items-start gap-4 hover:bg-white/10 transition-colors">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
               item.type === 'login' ? 'bg-blue-500/20 text-blue-400' :
               item.type === 'settings' ? 'bg-purple-500/20 text-purple-400' :

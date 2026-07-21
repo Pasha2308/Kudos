@@ -85,16 +85,16 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-neutral-950 text-white">
+    <div className="flex h-[calc(100vh-64px)] text-white">
       {/* Sidebar: Conversation List */}
-      <div className="w-80 border-r border-white/5 flex flex-col bg-neutral-900/50">
+      <div className="w-80 border-r border-white/5 flex flex-col backdrop-blur-xl bg-white/5">
         <div className="p-4 border-b border-white/5">
           <h2 className="font-bold text-lg">Direct Messages</h2>
           <div className="mt-4 relative">
             <input 
               type="text" 
               placeholder="Jump to..." 
-              className="w-full bg-neutral-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
             />
           </div>
         </div>

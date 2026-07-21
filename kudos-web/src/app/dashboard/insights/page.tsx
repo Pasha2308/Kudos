@@ -10,17 +10,17 @@ export default function InsightsPage() {
       <p className="text-neutral-400 mb-8">Understand your communication patterns and network health.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-neutral-900 border border-white/5 p-6 rounded-2xl">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 rounded-2xl">
           <div className="text-neutral-500 mb-2">Total Connections</div>
           <div className="text-4xl font-bold text-white">12</div>
           <div className="text-emerald-500 text-sm mt-2">↑ 2 from last week</div>
         </div>
-        <div className="bg-neutral-900 border border-white/5 p-6 rounded-2xl">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 rounded-2xl">
           <div className="text-neutral-500 mb-2">Messages Sent</div>
           <div className="text-4xl font-bold text-white">348</div>
           <div className="text-emerald-500 text-sm mt-2">↑ 15% from last week</div>
         </div>
-        <div className="bg-neutral-900 border border-white/5 p-6 rounded-2xl">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 rounded-2xl">
           <div className="text-neutral-500 mb-2">Longest Streak</div>
           <div className="text-4xl font-bold text-white">5 days</div>
           <div className="text-neutral-400 text-sm mt-2">Keep it up! 🔥</div>
@@ -28,7 +28,7 @@ export default function InsightsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-neutral-900 border border-white/5 p-6 rounded-2xl h-80 flex flex-col">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 rounded-2xl h-80 flex flex-col">
           <h3 className="font-semibold mb-4 text-lg">Communication Style</h3>
           <div className="flex-1 flex items-center justify-center border-t border-white/5 relative">
             <div className="text-neutral-500 text-center">
@@ -39,7 +39,7 @@ export default function InsightsPage() {
           </div>
         </div>
         
-        <div className="bg-neutral-900 border border-white/5 p-6 rounded-2xl h-80 flex flex-col">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 rounded-2xl h-80 flex flex-col">
           <h3 className="font-semibold mb-4 text-lg">Top Interests</h3>
           <div className="flex-1 flex flex-col justify-center gap-4 border-t border-white/5 pt-4">
             <div>

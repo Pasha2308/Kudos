@@ -53,17 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       {/* ─── Sidebar ─── */}
-      <aside style={{
-        width: 'var(--sidebar-w)',
-        minHeight: '100vh',
-        background: 'var(--surface-1)',
-        borderRight: '1px solid var(--border)',
-        position: 'fixed',
-        top: 0, left: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: 100,
-      }}>
+      <aside className="sidebar">
         {/* Logo */}
         <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <div className="companion-orb companion-orb-sm" />
@@ -119,12 +109,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ─── Main Content ─── */}
-      <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <header className="h-16 border-b border-white/5 flex items-center justify-end px-8 gap-4 bg-neutral-950 sticky top-0 z-10">
+      <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
+        <header className="h-16 border-b border-white/5 flex items-center justify-end px-8 gap-4 sticky top-0 z-10 backdrop-blur-2xl bg-white/5 shrink-0">
           <NotificationBell />
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px]">
-            <div className="w-full h-full rounded-full bg-neutral-900 border border-transparent overflow-hidden">
-              <img className="w-full h-full object-cover" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} alt="avatar" />
+          <div className="rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px] shrink-0" style={{ width: 32, height: 32 }}>
+            <div className="w-full h-full rounded-full bg-neutral-900 border border-transparent flex items-center justify-center text-xs font-bold text-white">
+              {initials}
             </div>
           </div>
         </header>

@@ -647,7 +647,7 @@ function MessagesScreen() {
 }
 
 export default function App() {
-  const [apiUrl, setApiUrl] = useState('http://localhost:8080'); // Adjust to your local IP if testing on physical device
+  const [apiUrl, setApiUrl] = useState('http://192.168.1.7:8080'); // Adjusted to local IP for physical device testing
   const [userToken, setUserToken] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
