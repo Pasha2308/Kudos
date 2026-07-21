@@ -11,6 +11,12 @@ import matchmakingRoutes from './routes/matchmaking.routes';
 import authRoutes from './routes/auth.routes';
 import memoryRoutes from './routes/memory.routes';
 import userRoutes from './routes/user.routes';
+import onboardingRoutes from './routes/onboarding.routes';
+import humansRoutes from './routes/humans.routes';
+import roomsRoutes from './routes/rooms.routes';
+import kudosRoutes from './routes/kudos.routes';
+import connectionHealthRoutes from './routes/connection-health.routes';
+import builderRoutes from './routes/builder.routes';
 import { NudgeService } from './services/ai/nudge.service';
 
 dotenv.config();
@@ -125,6 +131,14 @@ app.use('/api/billing', verifyAuth, billingRoutes);
 app.use('/api/kyc', verifyAuth, kycRoutes);
 app.use('/api/matchmaking', verifyAuth, matchmakingRoutes);
 app.use('/api/user', verifyAuth, userRoutes);
+
+// New Kudos Routes
+app.use('/api/onboarding', onboardingRoutes);
+app.use('/api/humans', verifyAuth, humansRoutes);
+app.use('/api/rooms', verifyAuth, roomsRoutes);
+app.use('/api/kudos', verifyAuth, kudosRoutes);
+app.use('/api/health', verifyAuth, connectionHealthRoutes);
+app.use('/api/builder', verifyAuth, builderRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'kudos-api' });

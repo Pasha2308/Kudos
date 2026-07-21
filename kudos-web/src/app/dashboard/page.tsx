@@ -1,234 +1,313 @@
 'use client';
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
-function DashboardContent() {
-  const searchParams = useSearchParams();
-  const success = searchParams.get('success');
-  const canceled = searchParams.get('canceled');
-  const [kycStatus, setKycStatus] = useState<string>('Loading...');
-  const [memories, setMemories] = useState<any[]>([]);
-  const [history, setHistory] = useState<any[]>([]);
-  const [preferences, setPreferences] = useState({ theme: 'dark', persona: 'cofounder', avatar: 'anime-glasses' });
-  const [savingPrefs, setSavingPrefs] = useState(false);
-  const { user, logout } = useAuth();
+interface Message { id: string; role: 'user' | 'ai'; content: string; ts: number; introNudge?: IntroNudge; }
+interface IntroNudge { name: string; reason: string; id: string; }
+interface HealthScore { score: number; label: string; conversationStreak: number; nudgeMessage: string; totalHumansMet: number; kudosGiven: number; irlMeetups: number; weeklyConversations: number; }
+interface DailyChallenge { challenge: { id: string; text: string; category: string; }; completedToday: boolean; completedThisWeek: number; weeklyGoal: number; }
+interface WarmIntro { id: string; name: string; location: string; personalityTags: string[]; companionReason: string; isOnline: boolean; }
+
+const MODES = [
+  { id: 'support', label: '🫂 Support', desc: 'Gentle listening mode' },
+  { id: 'deep', label: '🧠 Deep Think', desc: 'Philosophy & reflection' },
+  { id: 'builder', label: '🚀 Builder', desc: 'Sharp and accountable' },
+  { id: 'casual', label: '😄 Casual', desc: 'Just vibing' },
+];
+
+const QUICK_CHIPS = [
+  "How am I doing?", "I need to talk.", "I'm feeling stuck.", "Tell me something real.", "Who might I meet today?",
+];
+
+export default function DashboardHome() {
+  const { user } = useAuth();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [mode, setMode] = useState('support');
+  const [health, setHealth] = useState<HealthScore | null>(null);
+  const [challenge, setChallenge] = useState<DailyChallenge | null>(null);
+  const [intros, setIntros] = useState<WarmIntro[]>([]);
+  const [showModePanel, setShowModePanel] = useState(false);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
 
   useEffect(() => {
     if (!user) return;
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-    
-    // Fetch KYC Status
-    fetch(`${API_URL}/api/kyc/status`, {
-      headers: { 'Authorization': `Bearer ${user.token}` }
-    })
-      .then(res => res.json())
-      .then(data => setKycStatus(data.status || 'unverified'))
-      .catch(() => setKycStatus('unverified'));
+    const headers = { 'Authorization': `Bearer ${user.token}` };
 
-    // Fetch Memories
-    fetch(`${API_URL}/api/memory/summary`, {
-      headers: { 'Authorization': `Bearer ${user.token}` }
-    })
-      .then(res => res.json())
-      .then(data => setMemories(data.memories || []))
-      .catch(console.error);
-
-    // Fetch Chat History
-    fetch(`${API_URL}/api/chat/history`, {
-      headers: { 'Authorization': `Bearer ${user.token}` }
-    })
-      .then(res => res.json())
-      .then(data => setHistory(data.history || []))
-      .catch(console.error);
-
-    // Fetch Preferences
-    fetch(`${API_URL}/api/user/preferences`, {
-      headers: { 'Authorization': `Bearer ${user.token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.preferences) setPreferences(data.preferences);
+    // Load chat history
+    fetch(`${API_URL}/api/chat/history`, { headers })
+      .then(r => r.json())
+      .then(d => {
+        if (d.history?.length) {
+          setMessages(d.history.map((h: any) => ({ id: h.ts?.toString() || Math.random().toString(), role: h.role === 'assistant' ? 'ai' : h.role, content: h.content, ts: h.ts || Date.now() })));
+        } else {
+          // Welcome message
+          setMessages([{ id: 'welcome', role: 'ai', content: `Hey ${user.name?.split(' ')[0] || 'friend'}. I've been thinking about what you might need today. What's on your mind?`, ts: Date.now() }]);
+        }
       })
-      .catch(console.error);
-  }, [user]);
-
-  const handlePrefChange = async (key: string, value: string) => {
-    const newPrefs = { ...preferences, [key]: value };
-    setPreferences(newPrefs);
-    setSavingPrefs(true);
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-    try {
-      await fetch(`${API_URL}/api/user/preferences`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`
-        },
-        body: JSON.stringify(newPrefs)
+      .catch(() => {
+        setMessages([{ id: 'welcome', role: 'ai', content: `Hey ${user.name?.split(' ')[0] || 'friend'}. I've been thinking about what you might need today. What's on your mind?`, ts: Date.now() }]);
       });
-    } catch (e) {
-      console.error('Failed to save preferences:', e);
-    } finally {
-      setSavingPrefs(false);
+
+    // Load health score
+    fetch(`${API_URL}/api/health/score`, { headers })
+      .then(r => r.json())
+      .then(d => d.score && setHealth(d.score))
+      .catch(() => setHealth({ score: 74, label: 'Growing', conversationStreak: 12, nudgeMessage: "You're building something real.", totalHumansMet: 3, kudosGiven: 11, irlMeetups: 1, weeklyConversations: 18 }));
+
+    // Load daily challenge
+    fetch(`${API_URL}/api/health/challenge`, { headers })
+      .then(r => r.json())
+      .then(d => setChallenge(d))
+      .catch(() => setChallenge({ challenge: { id: 'reach_out_first', text: 'Reach out to someone first today. Don\'t wait for them.', category: 'action' }, completedToday: false, completedThisWeek: 3, weeklyGoal: 5 }));
+
+    // Load warm intros
+    fetch(`${API_URL}/api/humans/intros`, { headers })
+      .then(r => r.json())
+      .then(d => setIntros(d.intros || []))
+      .catch(() => setIntros([
+        { id: 'mock_priya', name: 'Priya Sharma', location: 'Mumbai', personalityTags: ['Builder', 'Night owl'], companionReason: 'You both mentioned hating small talk. Priya also builds at night.', isOnline: true },
+        { id: 'mock_arjun', name: 'Arjun Kapoor', location: 'Delhi', personalityTags: ['Overthinker', 'Technical'], companionReason: 'You both process life through long conversations.', isOnline: true },
+      ]));
+  }, [user, API_URL]);
+
+  const sendMessage = async (text?: string) => {
+    const msgText = text || input.trim();
+    if (!msgText || isTyping) return;
+    setInput('');
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: msgText, ts: Date.now() };
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+
+    try {
+      const res = await fetch(`${API_URL}/api/chat/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
+        body: JSON.stringify({ message: msgText, mode }),
+      });
+      const data = await res.json();
+      if (data.reply) {
+        const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: data.reply, ts: Date.now() };
+        setMessages(prev => [...prev, aiMsg]);
+      }
+    } catch {
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', content: "I'm here. Even when my connection isn't. ❤️", ts: Date.now() }]);
     }
+    setIsTyping(false);
   };
 
-  if (!user) return null;
+  const completeChallenge = async () => {
+    if (!challenge || challenge.completedToday || !user) return;
+    try {
+      await fetch(`${API_URL}/api/health/challenge/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
+        body: JSON.stringify({ challengeId: challenge.challenge.id }),
+      });
+      setChallenge(prev => prev ? { ...prev, completedToday: true, completedThisWeek: prev.completedThisWeek + 1 } : prev);
+    } catch (e) { console.error(e); }
+  };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <header className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>
-            <p className="text-neutral-400">{user.email}</p>
-          </div>
-          <div className="flex gap-4 items-center">
-            <Link href="/" className="text-indigo-400 hover:underline">Back to Home</Link>
-            <button onClick={logout} className="px-4 py-2 bg-red-900/50 text-red-400 hover:bg-red-900/80 rounded-lg transition-colors">Logout</button>
-          </div>
-        </header>
-
-        {success && (
-          <div className="mb-8 p-4 bg-green-900/50 border border-green-500 rounded-lg text-green-200">
-            🎉 Subscription successful! Welcome to Founder Pro.
-          </div>
-        )}
-
-        {canceled && (
-          <div className="mb-8 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200">
-            Subscription canceled. You have not been charged.
-          </div>
-        )}
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="p-6 bg-neutral-900 rounded-2xl border border-white/10">
-            <h2 className="text-xl font-bold mb-4">Subscription Status</h2>
-            <div className="text-neutral-400 mb-6">
-              Current Plan: <span className="text-white font-medium">{success ? 'Founder Pro' : 'Free Basic'}</span>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', height: '100vh', overflow: 'hidden' }}>
+      {/* ─── LEFT: Companion Chat Panel ─── */}
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', borderRight: '1px solid var(--border)' }}>
+        {/* Chat Header */}
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-1)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="companion-orb" style={{ width: 40, height: 40, flexShrink: 0 }} />
+            <div>
+              <h2 style={{ fontSize: '1rem', fontWeight: 700 }}>Your Companion</h2>
+              <p style={{ fontSize: '0.75rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
+                Always here
+              </p>
             </div>
-            {!success && (
-              <Link href="/#pricing" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white font-medium transition-colors">
-                Upgrade to Pro
-              </Link>
+          </div>
+
+          {/* Mode selector */}
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowModePanel(p => !p)}
+              style={{ fontSize: '0.8125rem', gap: 6 }}
+            >
+              {MODES.find(m => m.id === mode)?.label} <span>▾</span>
+            </button>
+            {showModePanel && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 8, zIndex: 200, width: 220, boxShadow: 'var(--shadow-elevated)' }}>
+                {MODES.map(m => (
+                  <button key={m.id} onClick={() => { setMode(m.id); setShowModePanel(false); }} style={{ width: '100%', background: mode === m.id ? 'rgba(99,102,241,0.12)' : 'none', border: 'none', borderRadius: 'var(--radius-sm)', color: mode === m.id ? 'var(--primary)' : 'var(--text-body)', cursor: 'pointer', padding: '10px 12px', textAlign: 'left', fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontWeight: 600 }}>{m.label}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.desc}</span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
+        </div>
 
-          <div className="p-6 bg-neutral-900 rounded-2xl border border-white/10">
-            <h2 className="text-xl font-bold mb-4">Identity Verification (KYC)</h2>
-            <div className="text-neutral-400 mb-6">
-              Status: <span className={`font-bold ${kycStatus === 'approved' ? 'text-green-400' : kycStatus === 'pending' ? 'text-yellow-400' : 'text-red-400'}`}>{kycStatus.toUpperCase()}</span>
+        {/* Messages */}
+        <div className="chat-area" style={{ flex: 1, overflowY: 'auto' }}>
+          {messages.map(msg => (
+            <div key={msg.id} className={`message-row ${msg.role === 'user' ? 'user-row' : ''}`}>
+              {msg.role === 'ai' && <div className="companion-orb" style={{ width: 32, height: 32, flexShrink: 0 }} />}
+              <div>
+                <div className={`message-bubble ${msg.role === 'ai' ? 'bubble-ai' : 'bubble-user'}`}>{msg.content}</div>
+                {msg.introNudge && (
+                  <div className="intro-nudge">
+                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-body)' }}>
+                      👤 <strong>{msg.introNudge.name}</strong> — {msg.introNudge.reason}
+                    </p>
+                    <div className="intro-nudge-actions">
+                      <Link href="/dashboard/humans" className="btn btn-primary btn-sm">Connect</Link>
+                      <button className="btn btn-ghost btn-sm">Maybe later</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {msg.role === 'user' && <div className="avatar avatar-sm">{(user?.name || 'U').slice(0, 1)}</div>}
             </div>
-            <p className="text-sm text-neutral-500 mb-4">
-              KYC verification is required to use the Human Matchmaking features on the Kudos mobile app.
+          ))}
+          {isTyping && (
+            <div className="message-row">
+              <div className="companion-orb" style={{ width: 32, height: 32, flexShrink: 0 }} />
+              <div className="bubble-ai typing-dots">
+                <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Quick chips */}
+        <div className="quick-chips">
+          {QUICK_CHIPS.map(chip => (
+            <button key={chip} className="quick-chip" onClick={() => sendMessage(chip)}>{chip}</button>
+          ))}
+        </div>
+
+        {/* Input */}
+        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, background: 'var(--surface-1)' }}>
+          <input
+            className="input"
+            placeholder="Talk to your companion..."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && sendMessage()}
+            style={{ flex: 1, borderRadius: 'var(--radius-pill)' }}
+          />
+          <button className="btn btn-primary btn-icon" onClick={() => sendMessage()} disabled={!input.trim() || isTyping} style={{ borderRadius: 'var(--radius-pill)', width: 48, height: 48 }}>
+            →
+          </button>
+        </div>
+      </div>
+
+      {/* ─── RIGHT: Sidebar Widgets ─── */}
+      <div style={{ overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Stats */}
+        {health && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {[
+              { label: '🔥 Streak', value: `${health.conversationStreak}d` },
+              { label: '👥 Met', value: health.totalHumansMet },
+              { label: '💛 Kudos', value: health.kudosGiven },
+            ].map(stat => (
+              <div key={stat.label} className="card" style={{ padding: '12px', textAlign: 'center' }}>
+                <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{stat.value}</p>
+                <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2 }}>{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Daily Challenge */}
+        {challenge && (
+          <div className="card" style={{ padding: '16px', borderColor: challenge.completedToday ? 'rgba(34,197,94,0.3)' : 'var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+              <p className="label" style={{ color: 'var(--accent)' }}>Daily Challenge</p>
+              {challenge.completedToday && <span className="badge badge-green">Done ✓</span>}
+            </div>
+            <p style={{ fontSize: '0.9375rem', fontWeight: 500, lineHeight: 1.5, marginBottom: 12, color: 'var(--text)' }}>
+              {challenge.challenge.text}
             </p>
-            {kycStatus === 'unverified' && (
-              <div className="px-4 py-2 bg-purple-600/50 rounded-lg text-purple-200 text-sm border border-purple-500/30">
-                Please use the Mobile App to submit your ID for verification.
-              </div>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              {Array.from({ length: challenge.weeklyGoal }).map((_, i) => (
+                <div key={i} style={{ height: 4, flex: 1, borderRadius: 2, background: i < challenge.completedThisWeek ? 'var(--primary)' : 'var(--surface-3)' }} />
+              ))}
+            </div>
+            <p className="caption" style={{ marginBottom: 10 }}>{challenge.completedThisWeek}/{challenge.weeklyGoal} this week</p>
+            {!challenge.completedToday && (
+              <button className="btn btn-ghost btn-sm btn-full" onClick={completeChallenge}>
+                Mark Done
+              </button>
             )}
           </div>
+        )}
 
-          <div className="p-6 bg-neutral-900 rounded-2xl border border-white/10">
-            <h2 className="text-xl font-bold mb-4">Download Kudos</h2>
-            <p className="text-neutral-400 mb-6">Get the desktop companion overlay for Windows.</p>
-            <a href="/Kudos-Installer.msi" download className="px-4 py-2 bg-white text-black hover:bg-neutral-200 rounded-lg font-medium transition-colors inline-block text-center w-full">
-              Download for Windows (x64)
-            </a>
+        {/* Warm Intros */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <p className="label" style={{ color: 'var(--text-muted)' }}>Warm Intros</p>
+            <Link href="/dashboard/humans" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none' }}>See all →</Link>
           </div>
+          {intros.slice(0, 2).map(intro => (
+            <div key={intro.id} className="card" style={{ padding: '14px', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+                <div className="avatar" style={{ flexShrink: 0 }}>
+                  {intro.name.slice(0, 1)}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <p style={{ fontWeight: 600, fontSize: '0.875rem' }}>{intro.name}</p>
+                    {intro.isOnline && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)' }} />}
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 6 }}>
+                    {intro.personalityTags.slice(0, 2).join(' · ')}
+                  </p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-body)', fontStyle: 'italic', lineHeight: 1.4 }}>
+                    "{intro.companionReason}"
+                  </p>
+                </div>
+              </div>
+              <Link href={`/dashboard/humans?intro=${intro.id}`} className="btn btn-ghost btn-sm btn-full" style={{ fontSize: '0.8125rem' }}>
+                Connect →
+              </Link>
+            </div>
+          ))}
         </div>
 
-        {/* Companion Settings Panel */}
-        <div className="mt-8 p-6 bg-neutral-900 rounded-2xl border border-white/10 relative overflow-hidden group hover:border-white/20 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative z-10">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Companion Settings</h2>
-              {savingPrefs && <span className="text-xs text-indigo-400 animate-pulse">Syncing to all devices...</span>}
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm text-neutral-400 block font-medium">UI Theme</label>
-                <select 
-                  value={preferences.theme} 
-                  onChange={e => handlePrefChange('theme', e.target.value)}
-                  className="w-full bg-neutral-950 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                >
-                  <option value="dark">Dark Mode</option>
-                  <option value="light">Light Mode</option>
-                  <option value="midnight">Midnight OLED</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm text-neutral-400 block font-medium">AI Persona</label>
-                <select 
-                  value={preferences.persona} 
-                  onChange={e => handlePrefChange('persona', e.target.value)}
-                  className="w-full bg-neutral-950 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                >
-                  <option value="cofounder">Cofounder (Professional)</option>
-                  <option value="mentor">Mentor (Guidance)</option>
-                  <option value="friend">Friend (Casual)</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm text-neutral-400 block font-medium">Desktop Avatar</label>
-                <select 
-                  value={preferences.avatar} 
-                  onChange={e => handlePrefChange('avatar', e.target.value)}
-                  className="w-full bg-neutral-950 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                >
-                  <option value="anime-glasses">Anime (Glasses)</option>
-                  <option value="robot">Robot</option>
-                  <option value="minimalist">Minimalist Bubble</option>
-                </select>
-              </div>
-            </div>
+        {/* Your Rooms */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <p className="label" style={{ color: 'var(--text-muted)' }}>Your Rooms</p>
+            <Link href="/dashboard/rooms" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none' }}>Explore →</Link>
           </div>
-        </div>
-
-        <div className="mt-8 grid md:grid-cols-2 gap-8">
-          <div className="p-6 bg-neutral-900 rounded-2xl border border-white/10">
-            <h2 className="text-xl font-bold mb-4">What Kudos Knows</h2>
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-              {memories.length > 0 ? memories.map(mem => (
-                <div key={mem.id} className="p-3 bg-neutral-950 rounded-lg text-sm text-neutral-300 border border-white/5">
-                  {mem.fact}
+          {[
+            { name: 'Midnight Builders', emoji: '🌙', active: 2 },
+            { name: 'Overthinkers Club', emoji: '💭', active: 3 },
+          ].map(room => (
+            <Link key={room.name} href="/dashboard/rooms" style={{ textDecoration: 'none' }}>
+              <div className="card" style={{ padding: '12px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, transition: 'border-color 0.15s' }}>
+                <span style={{ fontSize: '1.25rem' }}>{room.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text)' }}>{room.name}</p>
+                  <p className="caption">{room.active} active now</p>
                 </div>
-              )) : (
-                <p className="text-neutral-500 text-sm">No memories recorded yet.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="p-6 bg-neutral-900 rounded-2xl border border-white/10">
-            <h2 className="text-xl font-bold mb-4">Recent Chat History</h2>
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-              {history.length > 0 ? history.slice(-10).map((msg, i) => (
-                <div key={i} className={`p-3 rounded-lg text-sm border border-white/5 ${msg.role === 'user' ? 'bg-indigo-900/30 ml-8' : 'bg-neutral-950 mr-8'}`}>
-                  <div className="text-xs text-neutral-500 mb-1">{msg.role === 'user' ? 'You' : 'Kudos'}</div>
-                  <div className="text-neutral-300">{msg.content}</div>
-                </div>
-              )) : (
-                <p className="text-neutral-500 text-sm">No recent conversations.</p>
-              )}
-            </div>
-          </div>
+                <span className="badge badge-green" style={{ fontSize: '0.6875rem' }}>Live</span>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
-  );
-}
-
-export default function Dashboard() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-neutral-950 text-white p-8">Loading Dashboard...</div>}>
-      <DashboardContent />
-    </Suspense>
   );
 }

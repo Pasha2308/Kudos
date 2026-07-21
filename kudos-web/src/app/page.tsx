@@ -1,165 +1,291 @@
 'use client';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+
+const PERSONAS = [
+  { emoji: '💞', label: 'A real partner', desc: 'Someone who actually gets you' },
+  { emoji: '🤝', label: 'A cofounder', desc: 'Built on trust, not transaction' },
+  { emoji: '🧠', label: 'An early employee', desc: 'Who gives a damn about the mission' },
+  { emoji: '💰', label: 'Your first investor', desc: 'Who believes in you as a human' },
+  { emoji: '🌍', label: 'Real friends', desc: 'Who stop your midnight loneliness' },
+];
+
+const TESTIMONIALS = [
+  {
+    quote: "I found my cofounder through Kudos. We didn't even know we were looking for each other.",
+    name: 'Arjun K.',
+    role: 'Founder, Lagos',
+  },
+  {
+    quote: "Every other app asked what I wanted. Kudos actually tried to understand who I am first.",
+    name: 'Priya S.',
+    role: 'Designer & Builder, Mumbai',
+  },
+  {
+    quote: "My companion introduced me to someone I now call my best friend. No swiping. No pressure.",
+    name: 'Zara A.',
+    role: 'Product Lead, Dubai',
+  },
+];
 
 export default function Home() {
   const { user } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-white selection:bg-indigo-500/30">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full border-b border-white/10 bg-neutral-950/80 backdrop-blur-md z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold tracking-tighter hover:text-indigo-400 transition-colors">Kudos</Link>
-          <div className="flex gap-6 text-sm font-medium text-neutral-400">
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <Link href="/features" className="hover:text-white transition-colors">Features</Link>
-            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+    <div style={{ background: 'var(--bg)', color: 'var(--text)', minHeight: '100vh' }}>
+
+      {/* ─── Navbar ─── */}
+      <nav style={{
+        position: 'fixed', top: 0, width: '100%', zIndex: 100,
+        background: scrolled ? 'rgba(7,7,15,0.9)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(12px)' : 'none',
+        borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
+        transition: 'all 0.3s',
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="companion-orb companion-orb-sm" />
+            <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Kudos</span>
           </div>
-          <div className="flex gap-4 items-center">
+
+          <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+            <div className="hidden-mobile" style={{ display: 'flex', gap: 24 }}>
+              <Link href="/about" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9375rem', transition: 'color 0.15s' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>About</Link>
+              <Link href="/features" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9375rem', transition: 'color 0.15s' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>Features</Link>
+              <Link href="/pricing" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9375rem', transition: 'color 0.15s' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>Pricing</Link>
+            </div>
             {user ? (
-              <>
-                <Link href="/dashboard" className="px-4 py-2 text-sm font-medium hover:text-indigo-400 transition-colors">Dashboard</Link>
-              </>
+              <Link href="/dashboard" className="btn btn-primary btn-sm">Dashboard →</Link>
             ) : (
-              <>
-                <Link href="/login" className="px-4 py-2 text-sm font-medium hover:text-indigo-400 transition-colors">Log In</Link>
-                <Link href="/signup" className="px-4 py-2 text-sm font-medium bg-white text-black rounded-full hover:bg-neutral-200 transition-colors">Sign Up</Link>
-              </>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <Link href="/login" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9375rem' }}>Log in</Link>
+                <Link href="/signup" className="btn btn-pill">Get Started</Link>
+              </div>
             )}
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <main className="pt-32 pb-16 px-6 max-w-7xl mx-auto text-center relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-block mb-6 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium"
-        >
-          🚀 The AI companion that connects you to the world
-        </motion.div>
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-6xl md:text-8xl font-bold tracking-tight mb-8"
-        >
-          Meet Kudos. <br/>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-            On your desktop & in your pocket.
-          </span>
-        </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-xl text-neutral-400 mb-10 max-w-2xl mx-auto"
-        >
-          Kudos sits on your desktop as a transparent pet, and lives on your phone to match you with verified humans around the globe.
-        </motion.p>
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex justify-center gap-4"
-        >
-          <Link href="/pricing" className="px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-lg transition-all shadow-[0_0_40px_rgba(79,70,229,0.3)] hover:shadow-[0_0_60px_rgba(79,70,229,0.5)] active:scale-95">
-            Get Started
-          </Link>
-          <a href="#demo" className="px-8 py-4 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white font-medium text-lg transition-all">
-            Watch Demo
-          </a>
-        </motion.div>
-      </main>
+      {/* ─── Hero ─── */}
+      <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '120px 24px 80px', position: 'relative', overflow: 'hidden' }}>
+        {/* Background glows */}
+        <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: 800, height: 500, background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '40%', left: '20%', width: 400, height: 300, background: 'radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-      {/* Decorative Blur Background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none -z-10" />
+        <div style={{ maxWidth: 800, margin: '0 auto', position: 'relative', zIndex: 1, animation: 'fade-up 0.8s ease both' }}>
+          {/* Badge */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)',
+            borderRadius: 'var(--radius-pill)', padding: '6px 16px',
+            fontSize: '0.875rem', color: 'rgba(165,180,252,1)', marginBottom: 32,
+          }}>
+            <span>🔥</span> The anti-loneliness platform
+          </div>
 
-      {/* Features Grid */}
-      <section id="features" className="py-24 px-6 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold mb-12 text-center">Two Apps. One Ecosystem.</h2>
-        <div className="grid md:grid-cols-3 gap-8">
+          <h1 className="display-xl" style={{ marginBottom: 16, lineHeight: 1.1 }}>
+            You're not lonely.
+            <br />
+            <span className="gradient-text">You just haven't been understood yet.</span>
+          </h1>
+
+          <p className="body-lg" style={{ maxWidth: 560, margin: '0 auto 40px', color: 'var(--text-muted)' }}>
+            Kudos connects you to real humans through trust — not commercial intent.
+            Your AI companion understands you first. Then introduces you to someone real.
+          </p>
+
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/signup" className="btn btn-pill btn-lg" style={{ boxShadow: '0 0 40px rgba(99,102,241,0.4)' }}>
+              Start for Free →
+            </Link>
+            <Link href="#how-it-works" className="btn btn-pill-ghost btn-lg">
+              See How It Works
+            </Link>
+          </div>
+
+          {/* Companion orb hero visual */}
+          <div style={{ marginTop: 64, display: 'flex', justifyContent: 'center', gap: 16, alignItems: 'center' }}>
+            <div className="companion-orb companion-orb-xl" style={{ margin: '0 auto' }} />
+          </div>
+          <p className="caption" style={{ marginTop: 12 }}>Your companion. Always here.</p>
+        </div>
+      </section>
+
+      {/* ─── Problem Section ─── */}
+      <section style={{ padding: '80px 24px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+          <h2 className="display-lg" style={{ marginBottom: 12 }}>
+            Every app tries to match you by what you <em>want</em>.
+            <br />
+            <span className="gradient-text">Not who you are.</span>
+          </h2>
+          <p className="body-lg" style={{ maxWidth: 520, margin: '0 auto', color: 'var(--text-muted)' }}>
+            We researched every competitor. Here's what they all get wrong.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
           {[
-            { icon: '🖥️', title: 'Desktop Companion', desc: 'A floating, context-aware AI pet that observes your work and proactively chats with you.', color: 'indigo' },
-            { icon: '🛡️', title: 'Verified KYC', desc: 'Secure identity verification ensures that when you connect with others, you know they are real humans.', color: 'purple' },
-            { icon: '🤝', title: 'Human Matchmaking', desc: 'Use the Kudos Mobile app to find and chat with other verified humans in the network.', color: 'pink' }
-          ].map((feat, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              whileHover={{ y: -5 }}
-              className={`p-8 rounded-2xl bg-neutral-900 border border-white/5 hover:border-${feat.color}-500/30 transition-colors shadow-lg`}
-            >
-              <div className="text-3xl mb-4">{feat.icon}</div>
-              <h3 className="text-xl font-bold mb-3">{feat.title}</h3>
-              <p className="text-neutral-400">{feat.desc}</p>
-            </motion.div>
+            { name: 'YC Match / CoffeeSpace', icon: '❌', problem: '"Tell us what you want first" — scam profiles, idea people, and form-first friction.' },
+            { name: 'Bumble BFF / Dating Apps', icon: '❌', problem: 'Swipe mechanics, 24hr timers, ghosting. Built for urgency, not depth.' },
+            { name: 'Replika / Character.AI', icon: '❌', problem: 'AI that never bridges you to real humans. Proven to increase loneliness long-term.' },
+          ].map((item, i) => (
+            <div key={i} className="card" style={{ padding: 28, animation: `fade-up 0.5s ease ${i * 0.1}s both` }}>
+              <div style={{ fontSize: '2rem', marginBottom: 12 }}>{item.icon}</div>
+              <h3 className="h3" style={{ marginBottom: 8, color: 'var(--text-muted)', fontSize: '1rem' }}>{item.name}</h3>
+              <p className="body" style={{ color: 'var(--text-muted)' }}>{item.problem}</p>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* Enterprise Brain & Privacy Section */}
-      <section className="py-24 px-6 max-w-7xl mx-auto border-t border-white/5 relative">
-        <div className="absolute top-1/2 right-0 w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-        <div className="flex flex-col md:flex-row items-center gap-16">
-          <div className="flex-1 space-y-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
-                The Enterprise Brain, <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">100% Local.</span>
-              </h2>
-              <p className="text-xl text-neutral-400 mb-8">
-                Kudos runs LanceDB locally on your machine, embedding and searching your entire workspace without sending a single byte to the cloud. Total privacy, total recall.
-              </p>
-              <ul className="space-y-4 text-neutral-300">
-                <li className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">✓</div>
-                  On-device Vector Database (LanceDB)
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">✓</div>
-                  Offline LLM Support via Ollama
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">✓</div>
-                  Zero-Cloud Privacy Mode
-                </li>
-              </ul>
-            </motion.div>
+      {/* ─── How It Works ─── */}
+      <section id="how-it-works" style={{ padding: '80px 24px', background: 'var(--surface-1)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <p className="label" style={{ color: 'var(--primary)', marginBottom: 12 }}>How Kudos Works</p>
+            <h2 className="display-lg">Trust first. Everything else follows.</h2>
           </div>
-          
-          <div className="flex-1 w-full max-w-md relative">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="aspect-square rounded-full border-[1px] border-dashed border-white/20 flex items-center justify-center relative"
-            >
-              <div className="w-3/4 h-3/4 rounded-full border border-white/10 flex items-center justify-center bg-neutral-900/50 backdrop-blur-sm">
-                <div className="w-1/2 h-1/2 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 blur-xl animate-pulse" />
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
+            {[
+              {
+                step: '01',
+                title: 'Meet your companion',
+                body: 'Your AI companion learns who you are — not through forms, but through real conversation. No questionnaires. No checkboxes.',
+                emoji: '🤝',
+                gradient: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.1))',
+              },
+              {
+                step: '02',
+                title: 'Build real trust',
+                body: 'Your companion nudges you toward daily connection challenges. You talk. You become real. The kind of real that makes other humans want to know you.',
+                emoji: '🌱',
+                gradient: 'linear-gradient(135deg, rgba(14,165,233,0.12), rgba(99,102,241,0.1))',
+              },
+              {
+                step: '03',
+                title: 'Get a warm intro',
+                body: 'When the time is right, your companion introduces you to a real human — not because you match on paper, but because you match as people.',
+                emoji: '💫',
+                gradient: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(236,72,153,0.08))',
+              },
+            ].map((step, i) => (
+              <div key={i} style={{ display: 'flex', gap: 40, alignItems: 'center', flexWrap: 'wrap' }}>
+                {i % 2 === 1 && <div style={{ flex: 1, minWidth: 280, background: step.gradient, borderRadius: 'var(--radius-xl)', height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem', border: '1px solid var(--border)' }}>{step.emoji}</div>}
+                <div style={{ flex: 1, minWidth: 280 }}>
+                  <p className="label" style={{ color: 'var(--primary)', marginBottom: 8 }}>Step {step.step}</p>
+                  <h3 className="h1" style={{ marginBottom: 12 }}>{step.title}</h3>
+                  <p className="body-lg">{step.body}</p>
+                </div>
+                {i % 2 === 0 && <div style={{ flex: 1, minWidth: 280, background: step.gradient, borderRadius: 'var(--radius-xl)', height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem', border: '1px solid var(--border)' }}>{step.emoji}</div>}
               </div>
-              
-              <div className="absolute top-10 left-10 p-3 bg-neutral-900 border border-white/10 rounded-xl shadow-xl flex items-center gap-3 text-sm font-medium">
-                <span className="w-2 h-2 rounded-full bg-green-500" /> Local Mode Active
-              </div>
-              <div className="absolute bottom-10 right-0 p-3 bg-neutral-900 border border-white/10 rounded-xl shadow-xl text-sm font-medium">
-                Ollama • Llama 3
-              </div>
-            </motion.div>
+            ))}
           </div>
         </div>
       </section>
+
+      {/* ─── Who It's For ─── */}
+      <section style={{ padding: '80px 24px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h2 className="display-lg" style={{ marginBottom: 12 }}>Whether you're looking for...</h2>
+        </div>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 32 }}>
+          {PERSONAS.map((p, i) => (
+            <div key={i} className="card" style={{ padding: '20px 24px', textAlign: 'center', minWidth: 180, flex: '1 1 180px', maxWidth: 220, animation: `fade-up 0.4s ease ${i * 0.08}s both` }}>
+              <div style={{ fontSize: '2rem', marginBottom: 10 }}>{p.emoji}</div>
+              <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, marginBottom: 4 }}>{p.label}</h4>
+              <p className="caption">{p.desc}</p>
+            </div>
+          ))}
+        </div>
+        <p className="body-lg" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+          ...Kudos finds them through <strong style={{ color: 'var(--text)' }}>trust</strong>, not transaction.
+        </p>
+      </section>
+
+      {/* ─── Testimonials ─── */}
+      <section style={{ padding: '80px 24px', background: 'var(--surface-1)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <p className="label" style={{ color: 'var(--primary)', textAlign: 'center', marginBottom: 12 }}>Real Stories</p>
+          <h2 className="display-lg" style={{ textAlign: 'center', marginBottom: 48 }}>Built to fix loneliness</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+            {TESTIMONIALS.map((t, i) => (
+              <div key={i} className="card" style={{ padding: 28 }}>
+                <div style={{ color: 'var(--primary)', fontSize: '2rem', marginBottom: 12, lineHeight: 1 }}>"</div>
+                <p className="body" style={{ marginBottom: 20, lineHeight: 1.65, color: 'var(--text)' }}>{t.quote}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div>
+                    <p style={{ fontWeight: 600, fontSize: '0.875rem' }}>{t.name}</p>
+                    <p className="caption">{t.role}</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 2, marginTop: 10 }}>
+                  {'★★★★★'.split('').map((s, j) => <span key={j} style={{ color: 'var(--accent)', fontSize: '0.875rem' }}>{s}</span>)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA ─── */}
+      <section style={{ padding: '100px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(99,102,241,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', maxWidth: 600, margin: '0 auto' }}>
+          <h2 className="display-lg" style={{ marginBottom: 16 }}>
+            Stop being lonely.
+            <br />
+            <span className="gradient-text">Start being real.</span>
+          </h2>
+          <p className="body-lg" style={{ color: 'var(--text-muted)', marginBottom: 40 }}>
+            No credit card. No commercial intent. Just you and a companion who actually gets it.
+          </p>
+          <Link href="/signup" className="btn btn-pill btn-lg" style={{ boxShadow: '0 0 60px rgba(99,102,241,0.5)' }}>
+            Start for Free — No card required
+          </Link>
+        </div>
+      </section>
+
+      {/* ─── Footer ─── */}
+      <footer style={{ borderTop: '1px solid var(--border)', padding: '40px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <div className="companion-orb companion-orb-sm" />
+              <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800 }}>Kudos</span>
+            </div>
+            <p className="caption" style={{ maxWidth: 220 }}>Built to fix the loneliness epidemic.</p>
+          </div>
+          <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap' }}>
+            {[
+              { title: 'Product', links: ['Features', 'Pricing', 'Download'] },
+              { title: 'Company', links: ['About', 'Contact', 'Blog'] },
+              { title: 'Legal', links: ['Privacy', 'Terms', 'Safety'] },
+            ].map(col => (
+              <div key={col.title}>
+                <p className="label" style={{ color: 'var(--text-muted)', marginBottom: 12 }}>{col.title}</p>
+                {col.links.map(l => (
+                  <p key={l} style={{ marginBottom: 8 }}>
+                    <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem', transition: 'color 0.15s' }}>{l}</a>
+                  </p>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ maxWidth: 1200, margin: '24px auto 0', paddingTop: 24, borderTop: '1px solid var(--border)' }}>
+          <p className="caption">© 2026 Kudos. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 }

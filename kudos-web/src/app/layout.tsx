@@ -1,16 +1,30 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
+  display: "swap",
+  weight: ["600", "700", "800"],
 });
 
 export const metadata: Metadata = {
-  title: "Kudos AI | Your Desktop Companion",
-  description: "Kudos is your proactive AI business sounding board.",
+  title: "Kudos — Stop Being Lonely. Start Being Real.",
+  description: "Kudos connects you to real humans through trust, not commercial intent. Your AI companion understands you first. Then introduces you to someone real.",
+  keywords: ["connection", "loneliness", "cofounder", "AI companion", "real friendships"],
+  openGraph: {
+    title: "Kudos — The Anti-Loneliness Platform",
+    description: "Not a dating app. Not a networking app. The place where you stop being lonely by being real.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -19,11 +33,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${outfit.variable} font-sans h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
+      <body>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
