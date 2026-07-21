@@ -115,7 +115,7 @@ export default function MessagesPage() {
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px] flex-shrink-0">
                   <div className="w-full h-full rounded-full bg-neutral-900 border-2 border-transparent overflow-hidden">
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${getOtherParticipant(convo)}`} alt="avatar" />
+                    <img className="w-full h-full object-cover" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${getOtherParticipant(convo)}`} alt="avatar" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">

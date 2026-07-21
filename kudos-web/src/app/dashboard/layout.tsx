@@ -105,7 +105,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="health-bar-track">
             <div className="health-bar-fill" style={{ width: `${health.score}%` }} />
           </div>
-          </div>
           {health.conversationStreak > 0 && (
             <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 6 }}>🔥 {health.conversationStreak} day streak</p>
           )}
@@ -125,7 +124,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <NotificationBell />
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px]">
             <div className="w-full h-full rounded-full bg-neutral-900 border border-transparent overflow-hidden">
-              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} alt="avatar" />
+              <img className="w-full h-full object-cover" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} alt="avatar" />
             </div>
           </div>
         </header>
