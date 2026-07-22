@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { NavigationContainer, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
@@ -66,7 +66,7 @@ function CustomTabBar({ state, descriptors, navigation, onMorePress }: any) {
           >
             {isFocused && (
               <LinearGradient
-                colors={['rgba(99,102,241,0.15)', 'transparent']}
+                colors={['rgba(249,168,212,0.25)', 'transparent']}
                 style={tabStyles.activeGlow}
               />
             )}
@@ -157,8 +157,8 @@ function MainApp() {
   return (
     <View style={{ flex: 1 }}>
       <NavigationContainer theme={{
-        ...DarkTheme,
-        colors: { ...DarkTheme.colors, background: COLORS.bg, card: COLORS.surface1, border: COLORS.border, primary: COLORS.primary },
+        ...DefaultTheme,
+        colors: { ...DefaultTheme.colors, background: COLORS.bg, card: COLORS.surface1, border: COLORS.border, primary: COLORS.primary, text: COLORS.text },
       }}>
         <Tab.Navigator
           screenOptions={{ headerShown: false }}

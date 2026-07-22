@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
   optionSelected: {
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(99,102,241,0.08)',
+    backgroundColor: 'rgba(249,168,212,0.15)',
     ...SHADOW.glow,
   },
   optionEmoji: { fontSize: 26 },

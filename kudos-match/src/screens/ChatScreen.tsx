@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   modeChipActive: {
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(99,102,241,0.12)',
+    backgroundColor: 'rgba(249,168,212,0.20)',
     ...SHADOW.glow,
   },
   modeChipEmoji: { fontSize: 13 },

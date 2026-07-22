@@ -1,28 +1,28 @@
-﻿// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // Kudos Design System — Theme Tokens
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const COLORS = {
-  bg:        '#05050A',
-  surface1:  '#0F0F1A',
-  surface2:  '#161626',
-  surface3:  '#1E1E32',
-  primary:   '#6366F1',
-  secondary: '#A855F7',
-  accent:    '#F59E0B',
-  success:   '#22C55E',
+  bg:        '#FFFFFF',
+  surface1:  '#FAFAFA',
+  surface2:  '#F4F4F5',
+  surface3:  '#E4E4E7',
+  primary:   '#FBCFE8', // Light Pink
+  secondary: '#FDA4AF', // Rose Pink
+  accent:    '#F43F5E',
+  success:   '#10B981',
   danger:    '#EF4444',
-  warning:   '#F97316',
+  warning:   '#F59E0B',
   info:      '#0EA5E9',
-  text:      '#FFFFFF',
-  textBody:  '#CBD5E1',
-  textMuted: '#6B7280',
-  border:      'rgba(255,255,255,0.07)',
-  borderActive:'rgba(99,102,241,0.40)',
-  borderAccent:'rgba(245,158,11,0.30)',
-  overlay: 'rgba(0,0,0,0.60)',
-  gradientPrimary:   ['#6366F1', '#A855F7'] as const,
-  gradientAccent:    ['rgba(245,158,11,0.15)', 'rgba(236,72,153,0.15)'] as const,
+  text:      '#171717', // Black
+  textBody:  '#404040',
+  textMuted: '#737373',
+  border:      '#E5E5E5',
+  borderActive:'#F9A8D4',
+  borderAccent:'#FDA4AF',
+  overlay: 'rgba(0,0,0,0.30)',
+  gradientPrimary:   ['#F9A8D4', '#FDA4AF'] as const,
+  gradientAccent:    ['rgba(244,114,182,0.15)', 'rgba(251,113,133,0.15)'] as const,
 };
 
 export const SPACING = { xs:4, sm:8, md:16, lg:24, xl:32, xxl:48 };

@@ -74,7 +74,7 @@ export function LoginScreen() {
       {/* Background gradient orb */}
       <View style={styles.orbContainer}>
         <LinearGradient
-          colors={['rgba(99,102,241,0.25)', 'rgba(168,85,247,0.1)', 'transparent']}
+          colors={['rgba(251,207,232,0.4)', 'rgba(253,164,175,0.2)', 'transparent']}
           style={styles.orbGradient}
         />
       </View>

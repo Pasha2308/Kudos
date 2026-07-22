@@ -242,8 +242,8 @@ const styles = StyleSheet.create({
   cardName: { ...FONT.h2, color: COLORS.text },
   cardLocation: { ...FONT.caption, color: COLORS.textMuted, marginTop: 2 },
   insightBox: {
-    backgroundColor: 'rgba(99,102,241,0.08)', borderRadius: RADIUS.sm,
-    borderWidth: 1, borderColor: 'rgba(99,102,241,0.20)',
+    backgroundColor: 'rgba(249,168,212,0.15)', borderRadius: RADIUS.sm,
+    borderWidth: 1, borderColor: 'rgba(249,168,212,0.30)',
     padding: 12, marginBottom: SPACING.sm,
   },
   insightLabel: { ...FONT.caption, color: COLORS.primary, fontWeight: '700', marginBottom: 4 },
@@ -292,6 +292,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface2,
     borderWidth: 1, borderColor: COLORS.border,
   },
-  topicChipActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(99,102,241,0.08)' },
+  topicChipActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(249,168,212,0.15)' },
   topicText: { ...FONT.caption, color: COLORS.textMuted, fontWeight: '600' },
 });

@@ -31,7 +31,7 @@ export function Avatar({ name = '?', size = 'md', isOnline, isCompanion }: Props
 
   const content = (
     <View style={[styles.inner, { width: dim, height: dim, borderRadius: dim / 2 }]}>
-      <Text style={{ color: '#fff', fontSize, fontWeight: '700' }}>{initials}</Text>
+      <Text style={{ color: COLORS.text, fontSize, fontWeight: '700' }}>{initials}</Text>
     </View>
   );
 
@@ -54,7 +54,7 @@ export function Avatar({ name = '?', size = 'md', isOnline, isCompanion }: Props
           style={{ width: dim, height: dim, borderRadius: dim / 2, padding: 2 }}
         >
           <View style={[styles.inner, { borderRadius: dim / 2, width: dim - 4, height: dim - 4, backgroundColor: COLORS.surface2 }]}>
-            <Text style={{ color: '#fff', fontSize, fontWeight: '700' }}>{initials}</Text>
+            <Text style={{ color: COLORS.text, fontSize, fontWeight: '700' }}>{initials}</Text>
           </View>
         </LinearGradient>
       )}

@@ -93,7 +93,7 @@ const variantContainer: Record<string, object> = {
 };
 
 const variantLabel: Record<string, object> = {
-  primary:   { color: '#fff' },
+  primary:   { color: COLORS.text },
   secondary: { color: COLORS.text },
   danger:    { color: COLORS.danger },
   ghost:     { color: COLORS.primary },

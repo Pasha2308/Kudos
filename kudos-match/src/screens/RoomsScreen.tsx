@@ -348,5 +348,5 @@ const styles = StyleSheet.create({
   sendBtnText: { color: '#fff', fontWeight: '800', fontSize: 18 },
   emojiRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: SPACING.md },
   emojiOpt: { width: 48, height: 48, borderRadius: 12, backgroundColor: COLORS.surface1, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border },
-  emojiOptActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(99,102,241,0.1)' },
+  emojiOptActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(249,168,212,0.15)' },
 });
