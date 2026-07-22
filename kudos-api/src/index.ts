@@ -21,6 +21,7 @@ import settingsRoutes from './routes/settings.routes';
 import notificationRoutes from './routes/notification.routes';
 import dmRoutes from './routes/dm.routes';
 import searchRoutes from './routes/search.routes';
+import profileRoutes from './routes/profile.routes';
 import { NudgeService } from './services/ai/nudge.service';
 
 dotenv.config();
@@ -147,6 +148,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dm', dmRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/profile', profileRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'kudos-api' });

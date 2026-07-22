@@ -28,6 +28,46 @@ router.get('/intros', verifyAuth, async (req: any, res: any) => {
   }
 });
 
+// GET /api/humans/discover — Get intros and quota info for swipe deck
+router.get('/discover', verifyAuth, async (req: any, res: any) => {
+  try {
+    const userId = req.user.uid;
+    const intros = await TrustMatchingService.findPotentialIntros(userId);
+    
+    // Check quota
+    let plan = 'free';
+    let connectionsThisMonth = 0;
+    
+    if (firestoreReady) {
+      const userDoc = await db.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        const data = userDoc.data();
+        plan = data?.plan || 'free';
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        if (data?.lastConnectionMonth === currentMonth) {
+          connectionsThisMonth = data?.connectionsThisMonth || 0;
+        }
+      }
+    }
+    
+    let maxConnections = 5;
+    if (plan === 'pro') maxConnections = 15;
+    if (plan === 'premium') maxConnections = 25;
+    
+    res.json({ 
+      intros, 
+      quota: {
+        used: connectionsThisMonth,
+        max: maxConnections,
+        plan
+      }
+    });
+  } catch (e) {
+    console.error('[Humans] Error in discover:', e);
+    res.status(500).json({ error: 'Failed to discover humans' });
+  }
+});
+
 // POST /api/humans/send-note — send a warm note to connect with someone
 router.post('/send-note', verifyAuth, async (req: any, res: any) => {
   try {
@@ -38,13 +78,40 @@ router.post('/send-note', verifyAuth, async (req: any, res: any) => {
       return res.status(400).json({ error: 'toUserId and note are required' });
     }
 
-    // Get sender name
+    // Get sender name and check quota
     let fromUserName = 'Someone on Kudos';
     if (firestoreReady) {
       try {
         const userDoc = await db.collection('users').doc(fromUserId).get();
-        fromUserName = userDoc.data()?.name || fromUserName;
-      } catch (_) {}
+        if (userDoc.exists) {
+          const data = userDoc.data();
+          fromUserName = data?.name || fromUserName;
+          
+          // Quota check
+          const plan = data?.plan || 'free';
+          let maxConnections = 5;
+          if (plan === 'pro') maxConnections = 15;
+          if (plan === 'premium') maxConnections = 25;
+          
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          let connectionsThisMonth = 0;
+          if (data?.lastConnectionMonth === currentMonth) {
+            connectionsThisMonth = data?.connectionsThisMonth || 0;
+          }
+          
+          if (connectionsThisMonth >= maxConnections) {
+            return res.status(403).json({ error: 'Quota exceeded for this month' });
+          }
+          
+          // Update quota
+          await db.collection('users').doc(fromUserId).set({
+            connectionsThisMonth: connectionsThisMonth + 1,
+            lastConnectionMonth: currentMonth
+          }, { merge: true });
+        }
+      } catch (e) {
+        console.error('Error checking quota:', e);
+      }
     }
 
     const result = await TrustMatchingService.sendWarmNote(fromUserId, toUserId, note);

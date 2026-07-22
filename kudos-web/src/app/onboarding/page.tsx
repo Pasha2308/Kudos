@@ -27,6 +27,9 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
+  const [role, setRole] = useState('Founder');
+  const [tagline, setTagline] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
   const [valuesAnswers, setValuesAnswers] = useState<Record<string, 'A' | 'B'>>({});
   const [cardIndex, setCardIndex] = useState(0);
   const [messages, setMessages] = useState<{ role: 'ai' | 'user'; text: string }[]>([]);
@@ -55,7 +58,7 @@ export default function OnboardingPage() {
         await fetch(`${API_URL}/api/onboarding/step/1`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
-          body: JSON.stringify({ name: name.trim(), nickname: nickname.trim() || name.trim() }),
+          body: JSON.stringify({ name: name.trim(), nickname: nickname.trim() || name.trim(), role, tagline: tagline.trim(), photoURL: photoURL.trim() }),
         });
       }
     } catch (e) { console.error(e); }
@@ -162,8 +165,22 @@ export default function OnboardingPage() {
                 <input className="input" type="text" placeholder="Your name..." value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleStep1()} autoFocus />
               </div>
               <div>
-                <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Nickname (optional)</label>
-                <input className="input" type="text" placeholder="What your companion calls you..." value={nickname} onChange={e => setNickname(e.target.value)} />
+                <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>What best describes you?</label>
+                <select className="input" value={role} onChange={e => setRole(e.target.value)} style={{ width: '100%', appearance: 'none', background: 'var(--surface-2)', color: 'var(--text)' }}>
+                  <option value="Founder">Founder</option>
+                  <option value="Builder">Builder / Creator</option>
+                  <option value="Advisor">Advisor / Mentor</option>
+                  <option value="Investor">Investor</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Your Tagline (1 sentence)</label>
+                <input className="input" type="text" placeholder="e.g. Building the future of work" value={tagline} onChange={e => setTagline(e.target.value)} />
+              </div>
+              <div>
+                <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Profile Photo URL (optional)</label>
+                <input className="input" type="text" placeholder="https://example.com/avatar.jpg" value={photoURL} onChange={e => setPhotoURL(e.target.value)} />
               </div>
             </div>
             <button className="btn btn-primary btn-full btn-lg" onClick={handleStep1} disabled={!name.trim() || loading}>

@@ -101,13 +101,16 @@ export class OnboardingService {
    */
   static async saveBasicProfile(
     userId: string,
-    data: { name: string; nickname?: string }
+    data: { name: string; nickname?: string; role?: string; tagline?: string; photoURL?: string }
   ): Promise<void> {
     if (firestoreReady) {
       try {
         await db.collection('users').doc(userId).set({
           name: data.name,
           nickname: data.nickname || data.name,
+          role: data.role || 'Other',
+          tagline: data.tagline || '',
+          photoURL: data.photoURL || '',
           onboardingStep: 1,
           updatedAt: new Date(),
         }, { merge: true });

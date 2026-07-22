@@ -16,6 +16,11 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
+  const [tagline, setTagline] = useState('');
+  const [role, setRole] = useState('Founder');
+  const [experience, setExperience] = useState('');
+  const [currentCompany, setCurrentCompany] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [irlInput, setIrlInput] = useState(false);
@@ -23,6 +28,22 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!user) return;
     const headers = { 'Authorization': `Bearer ${user.token}` };
+
+    fetch(`${API_URL}/api/profile/me`, { headers })
+      .then(r => r.json())
+      .then(d => {
+        if (d.profile) {
+          setBio(d.profile.bio || '');
+          setLocation(d.profile.location || '');
+          setTagline(d.profile.tagline || '');
+          setRole(d.profile.role || 'Founder');
+          setExperience(d.profile.experience || '');
+          setCurrentCompany(d.profile.currentCompany || '');
+          setPhotoURL(d.profile.photoURL || '');
+          setTags(d.profile.personalityTags || []);
+        }
+      })
+      .catch(e => console.error(e));
 
     fetch(`${API_URL}/api/health/score`, { headers })
       .then(r => r.json())
@@ -51,6 +72,22 @@ export default function ProfilePage() {
     } catch (e) { console.error(e); }
   };
 
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await fetch(`${API_URL}/api/profile/me`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
+        body: JSON.stringify({ bio, location, tagline, role, experience, currentCompany, photoURL })
+      });
+      setEditing(false);
+    } catch (e) {
+      console.error(e);
+    }
+    setSaving(false);
+  };
+
   const scoreOffset = health ? RING_CIRCUMFERENCE * (1 - health.score / 100) : RING_CIRCUMFERENCE;
   const initials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
 
@@ -60,7 +97,9 @@ export default function ProfilePage() {
       <div className="glow-border" style={{ borderRadius: 'var(--radius-xl)', padding: '28px', marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
           <div className="avatar avatar-xl" style={{ flexShrink: 0 }}>
-            {initials}
+            {photoURL ? (
+              <img src={photoURL} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            ) : initials}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
@@ -69,7 +108,8 @@ export default function ProfilePage() {
               </h1>
               <span className="badge badge-green">● Verified Human</span>
             </div>
-            <p className="caption" style={{ marginBottom: 12 }}>{user?.email}</p>
+            <p className="caption" style={{ marginBottom: 4 }}>{role} {currentCompany ? `at ${currentCompany}` : ''}</p>
+            {tagline && <p style={{ fontStyle: 'italic', color: 'var(--text-body)', marginBottom: 12 }}>"{tagline}"</p>}
             {bio && <p className="body" style={{ marginBottom: 12 }}>{bio}</p>}
             {tags.length > 0 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -77,22 +117,59 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => setEditing(e => !e)}>
-            {editing ? 'Done' : '✏ Edit'}
+          <button className="btn btn-ghost btn-sm" onClick={() => {
+            if (editing) handleSaveProfile();
+            else setEditing(true);
+          }} disabled={saving}>
+            {editing ? (saving ? 'Saving...' : 'Done') : '✏ Edit'}
           </button>
         </div>
 
         {editing && (
           <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <label className="label" style={{ color: 'var(--accent)', display: 'block', marginBottom: 6 }}>In my own words</label>
+              <label className="label" style={{ color: 'var(--accent)', display: 'block', marginBottom: 6 }}>Tagline (1 sentence)</label>
+              <input className="input" placeholder="e.g. Building the future of work" value={tagline} onChange={e => setTagline(e.target.value)} />
+            </div>
+            <div>
+              <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Role</label>
+              <select className="input" value={role} onChange={e => setRole(e.target.value)} style={{ width: '100%', appearance: 'none', background: 'var(--surface-2)', color: 'var(--text)' }}>
+                <option value="Founder">Founder</option>
+                <option value="Builder">Builder / Creator</option>
+                <option value="Advisor">Advisor / Mentor</option>
+                <option value="Investor">Investor</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Current Company (optional)</label>
+                <input className="input" placeholder="e.g. Kudos" value={currentCompany} onChange={e => setCurrentCompany(e.target.value)} />
+              </div>
+              <div>
+                <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Experience</label>
+                <select className="input" value={experience} onChange={e => setExperience(e.target.value)} style={{ width: '100%', appearance: 'none', background: 'var(--surface-2)', color: 'var(--text)' }}>
+                  <option value="">Select...</option>
+                  <option value="0-1 yrs">0-1 yrs</option>
+                  <option value="2-5 yrs">2-5 yrs</option>
+                  <option value="5-10 yrs">5-10 yrs</option>
+                  <option value="10+ yrs">10+ yrs</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Profile Photo URL</label>
+              <input className="input" placeholder="https://..." value={photoURL} onChange={e => setPhotoURL(e.target.value)} />
+            </div>
+            <div>
+              <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>In my own words (Bio)</label>
               <textarea className="input textarea" placeholder="How would you describe yourself to someone who actually wants to know?" value={bio} onChange={e => setBio(e.target.value)} style={{ minHeight: 80 }} />
             </div>
             <div>
               <label className="label" style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Location</label>
               <input className="input" placeholder="City, Country" value={location} onChange={e => setLocation(e.target.value)} />
             </div>
-            <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => setEditing(false)} disabled={saving}>
+            <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }} onClick={handleSaveProfile} disabled={saving}>
               {saving ? 'Saving...' : 'Save'}
             </button>
           </div>

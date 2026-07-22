@@ -93,13 +93,13 @@ Write a single, warm, honest sentence (max 25 words) explaining to User A why th
       seenIds.add(userId);
 
       const otherUsersSnap = await db.collection('users')
-        .where('isVerified', '==', true)
+        .where('onboardingComplete', '==', true)
         .limit(20)
         .get();
 
       const candidates = otherUsersSnap.docs
         .filter(d => !seenIds.has(d.id))
-        .slice(0, 5);
+        .slice(0, 10);
 
       const intros = await Promise.all(candidates.map(async (doc) => {
         const targetProfile: UserProfile = { uid: doc.id, ...doc.data() as any };
@@ -118,6 +118,9 @@ Write a single, warm, honest sentence (max 25 words) explaining to User A why th
           lookingFor: targetProfile.values?.join(', ') || '',
           companionReason: reason,
           sharedTraits: shared.length > 0 ? shared : ['Building', 'Honest conversations'],
+          photoURL: targetProfile.photoURL || '',
+          role: targetProfile.role || 'Founder',
+          tagline: targetProfile.tagline || '',
           isOnline: Math.random() > 0.5, // TODO: real presence tracking
           lastSeen: '2h ago',
           builderMode: targetProfile.builderMode || false,

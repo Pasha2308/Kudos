@@ -16,6 +16,15 @@ interface WarmIntro {
   isOnline: boolean;
   lastSeen: string;
   builderMode: boolean;
+  photoURL?: string;
+  role?: string;
+  tagline?: string;
+}
+
+interface Quota {
+  used: number;
+  max: number;
+  plan: string;
 }
 
 const FILTERS = [
@@ -33,6 +42,8 @@ function HumansContent() {
 
   const [filter, setFilter] = useState('all');
   const [intros, setIntros] = useState<WarmIntro[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [quota, setQuota] = useState<Quota | null>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [noteTarget, setNoteTarget] = useState<WarmIntro | null>(null);
@@ -46,19 +57,20 @@ function HumansContent() {
     setLoading(true);
 
     Promise.all([
-      fetch(`${API_URL}/api/humans/intros?filter=${filter}`, { headers }).then(r => r.json()),
+      fetch(`${API_URL}/api/humans/discover?filter=${filter}`, { headers }).then(r => r.json()),
       fetch(`${API_URL}/api/humans/conversations`, { headers }).then(r => r.json()),
     ])
-      .then(([introData, convData]) => {
-        setIntros(introData.intros || []);
+      .then(([discoverData, convData]) => {
+        setIntros(discoverData.intros || []);
+        if (discoverData.quota) setQuota(discoverData.quota);
         setConversations(convData.conversations || []);
       })
       .catch(() => {
         setIntros([
-          { id: 'mock_priya', name: 'Priya Sharma', location: 'Mumbai, India', bio: 'Building things that matter. Love honest conversations at 2am.', personalityTags: ['Builder', 'Design-minded', 'Night owl'], companionReason: 'You both mentioned hating small talk. Priya also stays up late building things. Sound familiar?', sharedTraits: ['Night owl', 'Builder'], isOnline: true, lastSeen: '2h ago', builderMode: true },
-          { id: 'mock_arjun', name: 'Arjun Kapoor', location: 'Delhi, India', bio: 'Serial overthinker. I process life through long conversations.', personalityTags: ['Cofounder-minded', 'Technical'], companionReason: 'You both process life through overthinking. Arjun is the midnight builder type.', sharedTraits: ['Overthinker', 'Builder'], isOnline: true, lastSeen: '10m ago', builderMode: true },
-          { id: 'mock_zara', name: 'Zara Ahmed', location: 'Dubai, UAE', bio: 'Curious about everything. Designer by day, philosopher by night.', personalityTags: ['Creative', 'Curious', 'Direct'], companionReason: 'You both value depth over small talk and authenticity over performance.', sharedTraits: ['Direct', 'Curious'], isOnline: false, lastSeen: '3h ago', builderMode: false },
+          { id: 'mock_priya', name: 'Priya Sharma', role: 'Founder', tagline: 'Building things that matter.', location: 'Mumbai, India', bio: 'Love honest conversations at 2am.', personalityTags: ['Builder', 'Design-minded', 'Night owl'], companionReason: 'You both mentioned hating small talk. Priya also stays up late building things. Sound familiar?', sharedTraits: ['Night owl', 'Builder'], isOnline: true, lastSeen: '2h ago', builderMode: true, photoURL: '' },
+          { id: 'mock_arjun', name: 'Arjun Kapoor', role: 'Builder', tagline: 'Serial overthinker.', location: 'Delhi, India', bio: 'I process life through long conversations.', personalityTags: ['Cofounder-minded', 'Technical'], companionReason: 'You both process life through overthinking. Arjun is the midnight builder type.', sharedTraits: ['Overthinker', 'Builder'], isOnline: true, lastSeen: '10m ago', builderMode: true, photoURL: '' },
         ]);
+        setQuota({ used: 1, max: 5, plan: 'free' });
         setConversations([]);
       })
       .finally(() => setLoading(false));
@@ -73,13 +85,26 @@ function HumansContent() {
         body: JSON.stringify({ toUserId: noteTarget.id, note: noteText }),
       });
       setNoteSent(prev => new Set([...prev, noteTarget.id]));
+      if (quota) setQuota({ ...quota, used: quota.used + 1 });
       setNoteTarget(null);
       setNoteText('');
+      // Move to next card
+      setCurrentIndex(prev => prev + 1);
     } catch (e) {
+      // Mock success for local dev
       setNoteSent(prev => new Set([...prev, noteTarget.id]));
+      if (quota) setQuota({ ...quota, used: quota.used + 1 });
       setNoteTarget(null);
+      setNoteText('');
+      setCurrentIndex(prev => prev + 1);
     }
   };
+
+  const handlePass = () => {
+    setCurrentIndex(prev => prev + 1);
+  };
+
+  const currentIntro = intros[currentIndex];
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 900, margin: '0 auto' }}>
@@ -102,73 +127,103 @@ function HumansContent() {
 
       {activeTab === 'intros' && (
         <>
-          {/* Filter chips */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-            {FILTERS.map(f => (
-              <button key={f.id} onClick={() => setFilter(f.id)} className={`chip chip-clickable ${filter === f.id ? 'chip-active' : ''}`}>
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Intro cards */}
-          {loading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[1, 2, 3].map(i => (
-                <div key={i} className="card" style={{ padding: 24, height: 140, opacity: 0.4, background: 'var(--surface-2)' }} />
+          {/* Filter chips & Quota */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {FILTERS.map(f => (
+                <button key={f.id} onClick={() => { setFilter(f.id); setCurrentIndex(0); }} className={`chip chip-clickable ${filter === f.id ? 'chip-active' : ''}`}>
+                  {f.label}
+                </button>
               ))}
             </div>
+            {quota && (
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', background: 'var(--surface-2)', padding: '6px 12px', borderRadius: '20px' }}>
+                <span style={{ color: quota.used >= quota.max ? 'var(--pink)' : 'var(--text)' }}>{quota.used}</span> / {quota.max} connects used this month
+                {quota.used >= quota.max && (
+                  <Link href="/pricing" style={{ color: 'var(--primary)', marginLeft: 8, textDecoration: 'none', fontWeight: 600 }}>Upgrade</Link>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Swipe Deck */}
+          {loading ? (
+            <div className="card" style={{ padding: 24, height: 400, opacity: 0.4, background: 'var(--surface-2)' }} />
+          ) : !currentIntro ? (
+            <div className="card" style={{ padding: 40, textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🌟</div>
+              <h3 className="h3" style={{ marginBottom: 8 }}>You're all caught up</h3>
+              <p className="body" style={{ color: 'var(--text-muted)' }}>Come back later for more people.</p>
+            </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {intros.map((intro, i) => (
-                <div key={intro.id} className="card" style={{ padding: 24, animation: `fade-up 0.4s ease ${i * 0.08}s both`, position: 'relative', overflow: 'hidden' }}>
-                  {/* Online indicator */}
-                  {intro.isOnline && (
-                    <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)' }} />
-                      <span className="caption">Online now</span>
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-                    <div className="avatar avatar-lg">
-                      {intro.name.slice(0, 1)}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 2, flexWrap: 'wrap' }}>
-                        <h3 className="h3" style={{ fontSize: '1.0625rem' }}>{intro.name}</h3>
-                        {intro.builderMode && <span className="badge badge-indigo">🎯 Builder</span>}
-                      </div>
-                      <p className="caption" style={{ marginBottom: 10 }}>{intro.location} · Last seen {intro.lastSeen}</p>
-
-                      {/* Companion's reason */}
-                      <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 'var(--radius-md)', padding: '10px 14px', marginBottom: 14 }}>
-                        <p className="label" style={{ color: 'var(--sky)', marginBottom: 4 }}>Your companion says:</p>
-                        <p style={{ fontSize: '0.9375rem', color: 'var(--text-body)', lineHeight: 1.5, fontStyle: 'italic' }}>"{intro.companionReason}"</p>
-                      </div>
-
-                      {/* Shared traits */}
-                      <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-                        {intro.sharedTraits.map(trait => (
-                          <span key={trait} className="chip">{trait}</span>
-                        ))}
-                      </div>
-
-                      {/* Actions */}
-                      <div style={{ display: 'flex', gap: 10 }}>
-                        {noteSent.has(intro.id) ? (
-                          <span className="badge badge-green" style={{ padding: '8px 14px', fontSize: '0.875rem' }}>✓ Note sent</span>
-                        ) : (
-                          <button className="btn btn-primary btn-sm" onClick={() => setNoteTarget(intro)}>
-                            Send a warm note →
-                          </button>
-                        )}
-                        <button className="btn btn-ghost btn-sm">Maybe later</button>
-                      </div>
-                    </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div className="card" style={{ padding: 32, width: '100%', maxWidth: 500, position: 'relative', overflow: 'hidden', animation: 'fade-up 0.3s ease both' }}>
+                
+                {currentIntro.isOnline && (
+                  <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)' }} />
+                    <span className="caption">Online</span>
                   </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 24 }}>
+                  <div className="avatar avatar-xl" style={{ marginBottom: 16, width: 96, height: 96, fontSize: '2rem' }}>
+                    {currentIntro.photoURL ? (
+                      <img src={currentIntro.photoURL} alt={currentIntro.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                    ) : (
+                      currentIntro.name.slice(0, 1)
+                    )}
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
+                    <h2 className="h2" style={{ margin: 0 }}>{currentIntro.name}</h2>
+                    {currentIntro.builderMode && <span className="badge badge-indigo">🎯 Builder</span>}
+                  </div>
+                  
+                  <p style={{ fontWeight: 500, color: 'var(--text-muted)', marginBottom: 8 }}>
+                    {currentIntro.role} {currentIntro.tagline ? `· ${currentIntro.tagline}` : ''}
+                  </p>
+                  
+                  <p className="caption" style={{ marginBottom: 16 }}>{currentIntro.location}</p>
+
+                  {/* Shared traits */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 16 }}>
+                    {currentIntro.sharedTraits.map(trait => (
+                      <span key={trait} className="chip">{trait}</span>
+                    ))}
+                  </div>
+
+                  {currentIntro.bio && (
+                    <p className="body" style={{ color: 'var(--text-body)', marginBottom: 24, padding: '0 16px' }}>"{currentIntro.bio}"</p>
+                  )}
                 </div>
-              ))}
+
+                {/* Companion's reason */}
+                <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: 24 }}>
+                  <p className="label" style={{ color: 'var(--sky)', marginBottom: 8 }}>Your companion says:</p>
+                  <p style={{ fontSize: '0.9375rem', color: 'var(--text-body)', lineHeight: 1.5, fontStyle: 'italic' }}>"{currentIntro.companionReason}"</p>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+                  <button className="btn btn-ghost" style={{ flex: 1, padding: '16px', borderRadius: 'var(--radius-xl)' }} onClick={handlePass}>
+                    <span style={{ fontSize: '1.25rem' }}>✕</span> Pass
+                  </button>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ flex: 1, padding: '16px', borderRadius: 'var(--radius-xl)' }} 
+                    onClick={() => {
+                      if (quota && quota.used >= quota.max) {
+                        alert("You've used all your connections this month. Upgrade to get more!");
+                      } else {
+                        setNoteTarget(currentIntro);
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: '1.25rem' }}>👋</span> Connect
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </>

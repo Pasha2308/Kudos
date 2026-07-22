@@ -8,36 +8,23 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
   apiVersion: '2025-01-27.acacia' as any
 });
 
-// Create a checkout session for subscription
+// Create a checkout session for subscription (Mocked for Phase 1 - Everything is Free)
 router.post('/create-checkout-session', verifyAuth, async (req, res) => {
   try {
     const userId = (req as any).user.uid;
     const { planId } = req.body;
     
-    // Hardcoded plan for now, later mapped from DB
-    const priceId = planId === 'premium' ? 'price_premium_mock' : 'price_basic_mock';
-
-    let sessionUrl = `http://localhost:3000/dashboard?success=true&session_id=mock_session_123`;
-    
-    try {
-      if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_mock') {
-        const session = await stripe.checkout.sessions.create({
-          payment_method_types: ['card'],
-          mode: 'subscription',
-          line_items: [{ price: priceId, quantity: 1 }],
-          success_url: `http://localhost:3000/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `http://localhost:3000/dashboard?canceled=true`,
-          client_reference_id: userId,
-        });
-        if (session.url) sessionUrl = session.url;
-      }
-    } catch (stripeErr) {
-      console.warn('Stripe not fully configured, falling back to mock checkout URL.');
+    // For Phase 1, just instantly upgrade the user for free
+    if (planId === 'pro' || planId === 'premium') {
+      await db.collection('users').doc(userId).set({
+        plan: planId,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
     }
 
-    res.json({ url: sessionUrl });
+    res.json({ url: `http://localhost:3000/dashboard?success=true&plan=${planId}` });
   } catch (error: any) {
-    console.error('Stripe Error:', error);
+    console.error('Billing Error:', error);
     res.status(500).json({ error: error.message });
   }
 });

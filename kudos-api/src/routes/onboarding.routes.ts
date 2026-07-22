@@ -24,11 +24,11 @@ router.get('/values-cards', (req, res) => {
 router.post('/step/1', verifyAuth, async (req: any, res: any) => {
   try {
     const userId = req.user.uid;
-    const { name, nickname } = req.body;
+    const { name, nickname, role, tagline, photoURL } = req.body;
 
     if (!name) return res.status(400).json({ error: 'Name is required' });
 
-    await OnboardingService.saveBasicProfile(userId, { name, nickname });
+    await OnboardingService.saveBasicProfile(userId, { name, nickname, role, tagline, photoURL });
     const firstPrompt = await OnboardingService.getFirstConversationPrompt(name);
 
     res.json({ success: true, step: 1, firstConversationPrompt: firstPrompt });
