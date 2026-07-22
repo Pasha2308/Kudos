@@ -32,7 +32,7 @@ export default function About() {
             Our desktop pet runs silently on your machine, always there when you need it, powered by bleeding-edge LLM technology. But we didn't stop there.
           </p>
           <p>
-            With the Kudos Matchmaking network, we are bridging the gap between digital companionship and human connection. By verifying our users with secure KYC, we've built a safe space for ambitious founders and creatives to meet, collaborate, and grow together.
+            With the Kudos Matchmaking network, we are bridging the gap between digital companionship and human connection. We've built a safe space for ambitious founders, builders, and creatives to meet, collaborate, and grow together. Our AI doesn't just talk to you—it learns what makes you unique and introduces you to people who actually complement your personality.
           </p>
         </div>
 

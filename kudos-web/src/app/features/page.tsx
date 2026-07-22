@@ -38,18 +38,18 @@ export default function Features() {
           </div>
 
           <div className="p-10 bg-neutral-900 border border-white/5 rounded-3xl hover:border-purple-500/30 transition-colors">
-            <div className="w-16 h-16 bg-purple-500/20 text-purple-400 rounded-2xl flex items-center justify-center mb-6 text-3xl">📱</div>
-            <h3 className="text-2xl font-bold mb-4">Mobile Matchmaking</h3>
+            <div className="w-16 h-16 bg-purple-500/20 text-purple-400 rounded-2xl flex items-center justify-center mb-6 text-3xl">🌐</div>
+            <h3 className="text-2xl font-bold mb-4">Web-Based Matchmaking</h3>
             <p className="text-neutral-400 leading-relaxed">
-              Take the network with you. Our Expo React Native app lets you chat with your AI and enter the matchmaking queue from anywhere. Connect with other founders on the go.
+              Take the network with you. Our responsive web app lets you chat with your AI and enter the matchmaking queue from anywhere on any device. Connect with other founders on the go.
             </p>
           </div>
 
           <div className="p-10 bg-neutral-900 border border-white/5 rounded-3xl hover:border-emerald-500/30 transition-colors">
-            <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mb-6 text-3xl">🛡️</div>
-            <h3 className="text-2xl font-bold mb-4">KYC Identity Verification</h3>
+            <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mb-6 text-3xl">🧠</div>
+            <h3 className="text-2xl font-bold mb-4">AI Compatibility Matching</h3>
             <p className="text-neutral-400 leading-relaxed">
-              Safety is our top priority. Before joining the matchmaking pool, every user must pass a strict Know-Your-Customer check. No bots, no spam, just real people.
+              Instead of swiping on superficial stats, our AI companion introduces you to real humans based on deep personality alignment. Discover why you match before you even say hello.
             </p>
           </div>
 

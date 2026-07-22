@@ -265,21 +265,24 @@ export default function Home() {
             </div>
             <p className="caption" style={{ maxWidth: 220 }}>Built to fix the loneliness epidemic.</p>
           </div>
-          <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap' }}>
-            {[
-              { title: 'Product', links: ['Features', 'Pricing', 'Download'] },
-              { title: 'Company', links: ['About', 'Contact', 'Blog'] },
-              { title: 'Legal', links: ['Privacy', 'Terms', 'Safety'] },
-            ].map(col => (
-              <div key={col.title}>
-                <p className="label" style={{ color: 'var(--text-muted)', marginBottom: 12 }}>{col.title}</p>
-                {col.links.map(l => (
-                  <p key={l} style={{ marginBottom: 8 }}>
-                    <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem', transition: 'color 0.15s' }}>{l}</a>
-                  </p>
-                ))}
-              </div>
-            ))}
+          <div className="flex gap-12 flex-wrap sm:gap-24">
+            <div>
+              <p className="label" style={{ color: 'var(--text-muted)', marginBottom: 12 }}>Product</p>
+              <p style={{ marginBottom: 8 }}><Link href="/features" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem' }}>Features</Link></p>
+              <p style={{ marginBottom: 8 }}><Link href="/pricing" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem' }}>Pricing</Link></p>
+            </div>
+            <div>
+              <p className="label" style={{ color: 'var(--text-muted)', marginBottom: 12 }}>Company</p>
+              <p style={{ marginBottom: 8 }}><Link href="/about" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem' }}>About</Link></p>
+              <p style={{ marginBottom: 8 }}><Link href="/contact" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem' }}>Contact</Link></p>
+            </div>
+            <div>
+              <p className="label" style={{ color: 'var(--text-muted)', marginBottom: 12 }}>Legal</p>
+              <p style={{ marginBottom: 8 }}><Link href="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem' }}>Privacy</Link></p>
+              <p style={{ marginBottom: 8 }}><Link href="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem' }}>Terms</Link></p>
+              <p style={{ marginBottom: 8 }}><Link href="/refund" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem' }}>Refund Policy</Link></p>
+              <p style={{ marginBottom: 8 }}><Link href="/safety" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem' }}>Safety</Link></p>
+            </div>
           </div>
         </div>
         <div style={{ maxWidth: 1200, margin: '24px auto 0', paddingTop: 24, borderTop: '1px solid var(--border)' }}>

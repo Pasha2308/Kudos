@@ -24,32 +24,24 @@ export default function Contact() {
           <p className="text-xl text-neutral-400">Have a question? Our team is here to help.</p>
         </div>
 
-        <form className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">First Name</label>
-              <input type="text" className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors" placeholder="John" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">Last Name</label>
-              <input type="text" className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors" placeholder="Doe" />
-            </div>
-          </div>
+        <div className="bg-neutral-900 border border-white/10 rounded-2xl p-8 md:p-12 text-center">
+          <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">✉️</div>
+          <h2 className="text-2xl font-bold mb-4">Email Us Directly</h2>
+          <p className="text-neutral-400 mb-8 max-w-md mx-auto">
+            For support, partnership inquiries, or just to say hello, the fastest way to reach us is via email. We usually respond within 24 hours.
+          </p>
+          <a href="mailto:support@kudos.app" className="inline-flex items-center justify-center px-8 py-4 bg-white text-black rounded-xl font-bold hover:bg-neutral-200 active:scale-95 transition-all">
+            support@kudos.app
+          </a>
           
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-neutral-300">Email Address</label>
-            <input type="email" className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors" placeholder="john@example.com" />
+          <div className="mt-12 pt-8 border-t border-white/5">
+            <p className="text-sm font-medium text-neutral-500 mb-4">Or connect with us on socials</p>
+            <div className="flex gap-4 justify-center">
+              <a href="#" className="px-6 py-2 bg-neutral-950 border border-white/10 rounded-full text-sm font-medium hover:border-white/30 transition-colors">Twitter (X)</a>
+              <a href="#" className="px-6 py-2 bg-neutral-950 border border-white/10 rounded-full text-sm font-medium hover:border-white/30 transition-colors">LinkedIn</a>
+            </div>
           </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-neutral-300">Message</label>
-            <textarea rows={6} className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none" placeholder="How can we help you?" />
-          </div>
-
-          <button type="button" className="w-full py-4 bg-white text-black rounded-xl font-bold hover:bg-neutral-200 active:scale-95 transition-all">
-            Send Message
-          </button>
-        </form>
+        </div>
       </main>
     </div>
   );
