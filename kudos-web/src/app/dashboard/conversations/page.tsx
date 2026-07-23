@@ -194,10 +194,7 @@ export default function ConversationsPage() {
 
       {/* ── LEFT: Convo List ── */}
       <div style={{ width: 288, borderRight: '1px solid #ebebeb', display: 'flex', flexDirection: 'column', flexShrink: 0, background: '#fff' }}>
-        <div style={{ padding: '20px 20px 14px', borderBottom: '1px solid #ebebeb' }}>
-          <h2 style={{ fontSize: '1.0625rem', fontWeight: 800, color: '#111', margin: '0 0 3px' }}>Conversations</h2>
-          <p style={{ fontSize: '0.75rem', color: '#888', margin: 0 }}>AI companion + human connections</p>
-        </div>
+
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {allConvos.map(c => {
             const active = activeConvo?.id === c.id;

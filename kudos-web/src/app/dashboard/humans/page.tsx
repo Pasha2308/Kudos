@@ -113,20 +113,7 @@ function HumansContent() {
         <p className="body" style={{ color: 'var(--text-muted)' }}>People your companion thinks you might genuinely connect with.</p>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'var(--surface-1)', padding: 4, borderRadius: 'var(--radius-lg)', width: 'fit-content', border: '1px solid var(--border)' }}>
-        {[
-          { id: 'intros', label: '✨ Warm Intros' },
-          { id: 'conversations', label: '💬 Conversations' },
-        ].map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} style={{ background: activeTab === tab.id ? 'var(--primary)' : 'none', color: activeTab === tab.id ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 'var(--radius-md)', padding: '8px 20px', cursor: 'pointer', fontWeight: 500, fontSize: '0.9375rem', transition: 'all 0.15s' }}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
-      {activeTab === 'intros' && (
-        <>
           {/* Filter chips & Quota */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -226,38 +213,6 @@ function HumansContent() {
               </div>
             </div>
           )}
-        </>
-      )}
-
-      {activeTab === 'conversations' && (
-        <div>
-          {conversations.length === 0 ? (
-            <div className="card" style={{ padding: 40, textAlign: 'center' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>💬</div>
-              <h3 className="h3" style={{ marginBottom: 8 }}>No conversations yet</h3>
-              <p className="body" style={{ color: 'var(--text-muted)', maxWidth: 320, margin: '0 auto 20px' }}>
-                Send a warm note to someone in your intros and start your first real conversation.
-              </p>
-              <button className="btn btn-ghost btn-sm" onClick={() => setActiveTab('intros')}>View Warm Intros →</button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {conversations.map(conv => (
-                <Link key={conv.id} href={`/dashboard/humans/${conv.id}`} style={{ textDecoration: 'none' }}>
-                  <div className="card" style={{ padding: '16px 20px', display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <div className="avatar">{conv.otherUserName?.slice(0, 1)}</div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: 2 }}>{conv.otherUserName}</p>
-                      <p className="caption">{conv.lastMessage}</p>
-                    </div>
-                    {conv.unreadCount > 0 && <span className="nav-badge">{conv.unreadCount}</span>}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Note Modal */}
       {noteTarget && (

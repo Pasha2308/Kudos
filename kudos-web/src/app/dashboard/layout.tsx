@@ -8,7 +8,7 @@ import { CommandPalette } from '@/components/CommandPalette';
 const NAV = [
   { href: '/dashboard', icon: '🏠', label: 'Home' },
   { href: '/dashboard/conversations', icon: '💬', label: 'Conversations' },
-  { href: '/dashboard/humans', icon: '👥', label: 'Humans' },
+  { href: '/dashboard/humans', icon: '👥', label: 'Find Match' },
   { href: '/dashboard/rooms', icon: '🌐', label: 'Rooms', badgeKey: 'roomsBadge' },
   { href: '/dashboard/kudos', icon: '💛', label: 'Kudos Moments', badgeKey: 'kudosBadge' },
   { href: '/dashboard/builder', icon: '🎯', label: 'Builder Tools' },
