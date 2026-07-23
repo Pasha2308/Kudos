@@ -3,25 +3,25 @@
 
 /* ─── Design Tokens ──────────────────────────────────────────── */
 :root {
-  --bg:           #05050A; /* Extremely dark, almost black */
-  --surface-1:    rgba(15, 15, 26, 0.4); /* Translucent */
-  --surface-2:    rgba(22, 22, 38, 0.6);
-  --surface-3:    rgba(30, 30, 50, 0.8);
-  --border:       rgba(255,255,255,0.06);
-  --border-active:rgba(255,255,255,0.12);
+  --bg:           #f9f9fb; /* Light grey-white */
+  --surface-1:    #ffffff;
+  --surface-2:    #f4f4f6;
+  --surface-3:    #ececef;
+  --border:       #e8e8ec;
+  --border-active:#f9a8d4;
   --glass-blur:   blur(24px);
 
-  --primary:      #6366f1;
-  --primary-glow: rgba(99,102,241,0.3);
-  --secondary:    #a855f7;
-  --accent:       #f59e0b;
-  --success:      #22c55e;
+  --primary:      #f43f5e; /* Rose-pink primary */
+  --primary-glow: rgba(244,63,94,0.15);
+  --secondary:    #fb7185;
+  --accent:       #f97316;
+  --success:      #10b981;
   --sky:          #0ea5e9;
-  --pink:         #ec4899;
+  --pink:         #f9a8d4;
 
-  --text:         #ffffff;
-  --text-body:    #d1d5db;
-  --text-muted:   #6b7280;
+  --text:         #111111; /* Near black */
+  --text-body:    #404040;
+  --text-muted:   #888888;
 
   --radius-sm:    6px;
   --radius-md:    12px;
@@ -29,11 +29,11 @@
   --radius-xl:    24px;
   --radius-pill:  999px;
 
-  --shadow-card:  0 1px 3px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
-  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08);
-  --glow-sm:      0 0 20px rgba(99,102,241,0.2);
-  --glow-lg:      0 0 60px rgba(99,102,241,0.35);
-  --shadow-modal: 0 24px 80px rgba(0,0,0,0.8);
+  --shadow-card:  0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.08);
+  --glow-sm:      0 0 20px rgba(249,168,212,0.25);
+  --glow-lg:      0 0 60px rgba(244,63,94,0.2);
+  --shadow-modal: 0 24px 80px rgba(0,0,0,0.15);
 
   --sidebar-w:    240px;
   --tab-h:        72px;
@@ -45,10 +45,7 @@
 html { font-size: 16px; scroll-behavior: smooth; }
 
 body {
-  background: radial-gradient(circle at top right, rgba(67, 56, 202, 0.15), transparent 40%),
-              radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.1), transparent 40%),
-              var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--text);
   font-family: 'Inter', sans-serif;
   line-height: 1.6;
@@ -86,10 +83,8 @@ h1, h2, h3, h4, h5 { font-family: 'Outfit', sans-serif; line-height: 1.2; }
 .sidebar {
   width: var(--sidebar-w);
   min-height: 100vh;
-  background: var(--surface-1);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-right: 1px solid var(--border);
+  background: #ffffff;
+  border-right: 1px solid #ebebeb;
   position: fixed;
   top: 0; left: 0;
   display: flex;
@@ -229,14 +224,14 @@ h1, h2, h3, h4, h5 { font-family: 'Outfit', sans-serif; line-height: 1.2; }
 .companion-orb {
   width: 60px; height: 60px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, rgba(168,85,247,0.9), rgba(99,102,241,0.8), rgba(59,130,246,0.6));
-  box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 60px rgba(168,85,247,0.2), inset 0 1px 1px rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, #f9a8d4, #fda4af);
+  box-shadow: 0 0 20px rgba(249,168,212,0.4), inset 0 1px 1px rgba(255,255,255,0.5);
   animation: orb-pulse 2.5s ease-in-out infinite;
   flex-shrink: 0;
 }
 .companion-orb-sm { width: 32px; height: 32px; }
 .companion-orb-lg { width: 80px; height: 80px; }
-.companion-orb-xl { width: 120px; height: 120px; box-shadow: 0 0 60px rgba(99,102,241,0.6), 0 0 120px rgba(168,85,247,0.3), inset 0 2px 2px rgba(255,255,255,0.3); }
+.companion-orb-xl { width: 120px; height: 120px; }
 
 @keyframes orb-pulse {
   0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 60px rgba(168,85,247,0.2); }
@@ -263,15 +258,16 @@ h1, h2, h3, h4, h5 { font-family: 'Outfit', sans-serif; line-height: 1.2; }
   position: relative;
 }
 .nav-item:hover { 
-  background: rgba(255,255,255,0.03); 
-  color: var(--text); 
-  transform: translateX(4px); 
+  background: #fff5f7; 
+  color: #111; 
+  transform: translateX(3px); 
 }
 .nav-item.active {
-  background: rgba(99,102,241,0.12);
-  color: var(--primary);
-  border-left: 3px solid var(--primary);
+  background: #fff0f4;
+  color: #f43f5e;
+  border-left: 3px solid #f43f5e;
   padding-left: 9px;
+  font-weight: 600;
 }
 .nav-item .nav-icon { width: 20px; text-align: center; font-size: 1.125rem; }
 .nav-badge {

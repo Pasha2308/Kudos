@@ -1,9 +1,8 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { NotificationBell } from '@/components/NotificationBell';
 import { CommandPalette } from '@/components/CommandPalette';
 
 const NAV = [
@@ -108,15 +107,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ─── Main Content ─── */}
       <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
-        <header className="h-16 border-b border-white/5 flex items-center justify-end px-8 gap-4 sticky top-0 z-10 backdrop-blur-2xl bg-white/5 shrink-0">
-          <NotificationBell />
-          <div className="rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px] shrink-0" style={{ width: 32, height: 32 }}>
-            <div className="w-full h-full rounded-full bg-neutral-900 border border-transparent flex items-center justify-center text-xs font-bold text-white">
-              {initials}
-            </div>
-          </div>
-        </header>
-        <div className="flex-1">
+        <div style={{ flex: 1 }}>
           {children}
         </div>
         <CommandPalette />
