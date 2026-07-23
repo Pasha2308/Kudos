@@ -1,4 +1,4 @@
-import { getGroqClient } from '../../config/groq';
+import { callGroqWithFallback, getGroqClient } from '../../config/groq';
 import { db, firestoreReady } from '../../config/firebase';
 import { SituationType, NeedType, SituationExtractorService } from './situation-extractor.service';
 
@@ -44,57 +44,69 @@ export interface WarmIntro {
 export class TrustMatchingService {
 
   /**
-   * Generates a warm intro reason between two users using AI.
-   * Now situation-aware — if there's a situation match, the intro references it.
+   * Generates warm intro reasons for multiple targets in a single batch.
    */
-  static async generateWarmIntroReason(
+  static async generateWarmIntroReasonsBatch(
     userProfile: UserProfile,
-    targetProfile: UserProfile,
+    targetProfiles: UserProfile[],
     conversationContext?: string
-  ): Promise<string> {
-    const groq = getGroqClient();
-
+  ): Promise<Record<string, string>> {
     const userSituation = userProfile.situationProfile?.currentSituation;
-    const targetBeenThrough = targetProfile.situationProfile?.beenThrough || [];
-    const situationMatch = userSituation && targetBeenThrough.includes(userSituation);
+    
+    // Prepare candidate info
+    const candidatesText = targetProfiles.map(target => {
+      const targetBeenThrough = target.situationProfile?.beenThrough || [];
+      const situationMatch = userSituation && targetBeenThrough.includes(userSituation);
+      const situationContext = situationMatch
+        ? ` (NOTE: Target has been through the user's current situation: "${SituationExtractorService.getSituationLabel(userSituation as SituationType)}". Reference this!)`
+        : '';
+        
+      return `Target ID: ${target.uid}
+Name: ${target.name}
+Personality: ${target.personalityTags?.join(', ') || 'direct, thoughtful'}
+Has been through: ${targetBeenThrough.map(s => SituationExtractorService.getSituationLabel(s)).join(', ') || 'Many things'}${situationContext}`;
+    }).join('\n\n');
 
-    const situationContext = situationMatch
-      ? `\nCRITICAL CONTEXT: User A is currently going through "${SituationExtractorService.getSituationLabel(userSituation as SituationType)}". User B has been through this same situation before. Reference this in your intro — it is the CORE reason for the connection.`
-      : '';
+    const prompt = `You are Kudos, an AI companion that introduces people to each other based on genuine human compatibility.
 
-    const prompt = `You are Kudos, an AI companion that introduces people to each other — not based on profile matches, but on genuine human compatibility.
+USER A (The person looking for matches):
+Name: ${userProfile.name}
+Personality: ${userProfile.personalityTags?.join(', ') || 'curious, honest'}
+Recent thoughts: ${conversationContext || 'Thinking about building something meaningful'}
+Current situation: ${userSituation ? SituationExtractorService.getSituationLabel(userSituation as SituationType) : 'General'}
 
-USER A: ${userProfile.name}
-- Personality: ${userProfile.personalityTags?.join(', ') || 'curious, honest'}
-- Work style: ${userProfile.workStyle || 'async'}
-- Life stage: ${userProfile.lifeStage || 'building'}
-- Recent thoughts: ${conversationContext || 'Thinking about building something meaningful'}
-- Current situation: ${userSituation ? SituationExtractorService.getSituationLabel(userSituation as SituationType) : 'General'}
+Here are ${targetProfiles.length} potential matches for User A:
+${candidatesText}
 
-USER B: ${targetProfile.name}
-- Personality: ${targetProfile.personalityTags?.join(', ') || 'direct, thoughtful'}
-- Work style: ${targetProfile.workStyle || 'async'}
-- Life stage: ${targetProfile.lifeStage || 'building'}
-- Has been through: ${targetBeenThrough.map(s => SituationExtractorService.getSituationLabel(s)).join(', ') || 'Many things'}
-${situationContext}
-
-Write a single, warm, honest sentence (max 30 words) explaining to User A why they might connect with User B.
+For EACH Target ID, write a single, warm, honest sentence (max 30 words) explaining to User A why they might connect with this person.
 - Sound like a trusted friend speaking, NOT an algorithm
 - If there's a situation match, lead with that — e.g. "Rahul went through a cofounder conflict in 2023..."
 - Never use "compatible" or percentage words
-- Start with the person's name`;
+- Start with the person's name
+
+Respond ONLY with a valid JSON object where keys are the "Target ID" and values are the intro sentence.
+Example format:
+{
+  "target_uid_1": "Sarah went through building alone...",
+  "target_uid_2": "Peer Founder has also been building alone..."
+}`;
 
     try {
-      const response = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.8,
-        max_tokens: 100,
-      });
-      return response.choices[0]?.message?.content?.trim() ||
-        `You both seem like people who build things that matter and value honest conversations.`;
+      const responseText = await callGroqWithFallback(
+        [{ role: 'user', content: prompt }],
+        ['llama-3.3-70b-versatile', 'llama3-8b-8192', 'mixtral-8x7b-32768'],
+        {
+          temperature: 0.8,
+          max_tokens: 1500,
+          response_format: { type: 'json_object' }
+        }
+      );
+      
+      return JSON.parse(responseText);
     } catch (e) {
-      return `You both seem like people who build things that matter and value honest conversations.`;
+      console.error('[TrustMatching] Batch generation failed:', e);
+      // Return empty record to let fallback handle it
+      return {};
     }
   }
 
@@ -169,9 +181,15 @@ Write a single, warm, honest sentence (max 30 words) explaining to User A why th
 
       scored.sort((a, b) => b.score - a.score);
       const top = scored.slice(0, 10);
+      
+      // Batch generate reasons
+      const batchReasons = await TrustMatchingService.generateWarmIntroReasonsBatch(
+        userProfile,
+        top.map(s => s.profile)
+      );
 
-      const intros = await Promise.all(top.map(async ({ profile: target, sharedTags }) => {
-        const reason = await TrustMatchingService.generateWarmIntroReason(userProfile, target);
+      const intros = top.map(({ profile: target, sharedTags }) => {
+        const reason = batchReasons[target.uid] || `You both seem like people who build things that matter and value honest conversations.`;
         const targetBeenThrough = target.situationProfile?.beenThrough || [];
         const isSituationAdvisor = userSituation ? targetBeenThrough.includes(userSituation) : false;
 
@@ -198,7 +216,7 @@ Write a single, warm, honest sentence (max 30 words) explaining to User A why th
             : null,
           beenThrough: targetBeenThrough.map(s => SituationExtractorService.getSituationLabel(s as SituationType)),
         };
-      }));
+      });
 
       return intros;
     } catch (e) {
