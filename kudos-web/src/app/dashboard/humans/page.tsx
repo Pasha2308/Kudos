@@ -19,6 +19,9 @@ interface WarmIntro {
   photoURL?: string;
   role?: string;
   tagline?: string;
+  badges?: string[];
+  isSituationAdvisor?: boolean;
+  situationLabel?: string;
 }
 
 interface Quota {
@@ -29,10 +32,11 @@ interface Quota {
 
 const FILTERS = [
   { id: 'all', label: 'Everyone' },
-  { id: 'builders', label: '🎯 Builders' },
-  { id: 'friends', label: '💞 Friends' },
-  { id: 'partners', label: '🌹 Partners' },
-  { id: 'investors', label: '💰 Investors' },
+  { id: 'advisors', label: '🧠 Advisors' },
+  { id: 'cofounder_conflict', label: '⚔️ Cofounder Conflict' },
+  { id: 'fundraising', label: '💰 Fundraising' },
+  { id: 'loneliness', label: '😔 Loneliness' },
+  { id: 'burnout', label: '🔥 Burnout' },
 ];
 
 function HumansContent() {
@@ -108,9 +112,11 @@ function HumansContent() {
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 900, margin: '0 auto' }}>
-      <div style={{ marginBottom: 28 }}>
-        <h1 className="h1" style={{ marginBottom: 4 }}>Humans</h1>
-        <p className="body" style={{ color: 'var(--text-muted)' }}>People your companion thinks you might genuinely connect with.</p>
+      <div style={{ marginBottom: 28, background: 'var(--primary-glow)', padding: '20px', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(244,63,94,0.2)' }}>
+        <h1 className="h1" style={{ marginBottom: 4 }}>Matches</h1>
+        <p className="body" style={{ color: 'var(--text-body)' }}>
+          <strong>How this works:</strong> Tell your AI companion what you're going through in chat. It will automatically find people who have been through the exact same situation to help you.
+        </p>
       </div>
 
 
@@ -167,6 +173,19 @@ function HumansContent() {
                     {currentIntro.builderMode && <span className="badge badge-indigo">🎯 Builder</span>}
                   </div>
                   
+                  {/* Badges */}
+                  <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
+                    {currentIntro.badges?.includes('trusted') && (
+                      <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>✓ Trusted</span>
+                    )}
+                    {currentIntro.badges?.includes('advisor') && (
+                      <span style={{ fontSize: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>🧠 Advisor</span>
+                    )}
+                    {currentIntro.badges?.includes('verified_founder') && (
+                      <span style={{ fontSize: '0.75rem', background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>✦ Verified Founder</span>
+                    )}
+                  </div>
+                  
                   <p style={{ fontWeight: 500, color: 'var(--text-muted)', marginBottom: 8 }}>
                     {currentIntro.role} {currentIntro.tagline ? `· ${currentIntro.tagline}` : ''}
                   </p>
@@ -186,10 +205,17 @@ function HumansContent() {
                 </div>
 
                 {/* Companion's reason */}
-                <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: 24 }}>
-                  <p className="label" style={{ color: 'var(--sky)', marginBottom: 8 }}>Your companion says:</p>
-                  <p style={{ fontSize: '0.9375rem', color: 'var(--text-body)', lineHeight: 1.5, fontStyle: 'italic' }}>"{currentIntro.companionReason}"</p>
-                </div>
+                {currentIntro.isSituationAdvisor ? (
+                  <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: 24 }}>
+                    <p className="label" style={{ color: '#f59e0b', marginBottom: 8 }}>⚡ SITUATION MATCH: {currentIntro.situationLabel?.toUpperCase()}</p>
+                    <p style={{ fontSize: '0.9375rem', color: 'var(--text-body)', lineHeight: 1.5, fontStyle: 'italic' }}>"{currentIntro.companionReason}"</p>
+                  </div>
+                ) : (
+                  <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: 24 }}>
+                    <p className="label" style={{ color: 'var(--sky)', marginBottom: 8 }}>Your companion says:</p>
+                    <p style={{ fontSize: '0.9375rem', color: 'var(--text-body)', lineHeight: 1.5, fontStyle: 'italic' }}>"{currentIntro.companionReason}"</p>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>

@@ -12,6 +12,7 @@ const NAV = [
   { href: '/dashboard/rooms', icon: '🌐', label: 'Rooms', badgeKey: 'roomsBadge' },
   { href: '/dashboard/kudos', icon: '💛', label: 'Kudos Moments', badgeKey: 'kudosBadge' },
   { href: '/dashboard/builder', icon: '🎯', label: 'Builder Tools' },
+  { href: '/admin', icon: '🛡️', label: 'Admin', adminOnly: true },
   { href: '/dashboard/settings', icon: '⚙️', label: 'Settings' },
   { href: '/dashboard/profile', icon: '🪪', label: 'Profile' },
 ];
@@ -28,6 +29,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  useEffect(() => {
+    if ((user as any)?.role === 'admin' || user?.email === 'admin@example.com' || user?.uid === 'admin_user') {
+      setIsAdmin(true);
+    }
+  }, [user]);
 
   const [health, setHealth] = useState<HealthScore>({ score: 0, label: 'Starting', conversationStreak: 0, nudgeMessage: '' });
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -68,14 +77,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '12px 8px', overflowY: 'auto' }}>
-          {NAV.map(item => {
+          {NAV.filter(item => !item.adminOnly || isAdmin).map(item => {
             const active = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href));
             const badge = item.badgeKey ? badges[item.badgeKey as keyof typeof badges] : 0;
             return (
               <Link key={item.href} href={item.href} className={`nav-item ${active ? 'active' : ''}`}>
                 <span className="nav-icon">{item.icon}</span>
                 <span>{item.label}</span>
-                {item.dot && <span className="nav-dot" />}
+                {(item as any).dot && <span className="nav-dot" />}
                 {badge > 0 && <span className="nav-badge">{badge}</span>}
               </Link>
             );

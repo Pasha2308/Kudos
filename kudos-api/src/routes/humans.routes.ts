@@ -43,16 +43,17 @@ router.get('/discover', verifyAuth, async (req: any, res: any) => {
       if (userDoc.exists) {
         const data = userDoc.data();
         plan = data?.plan || 'free';
-        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        const currentMonth = new Date().toISOString().slice(0, 7);
         if (data?.lastConnectionMonth === currentMonth) {
           connectionsThisMonth = data?.connectionsThisMonth || 0;
         }
       }
     }
     
-    let maxConnections = 5;
-    if (plan === 'pro') maxConnections = 15;
-    if (plan === 'premium') maxConnections = 25;
+    // Plan limits: free=3, pro=20, elite=unlimited
+    let maxConnections = 3;
+    if (plan === 'pro') maxConnections = 20;
+    if (plan === 'elite') maxConnections = 9999;
     
     res.json({ 
       intros, 
@@ -87,11 +88,11 @@ router.post('/send-note', verifyAuth, async (req: any, res: any) => {
           const data = userDoc.data();
           fromUserName = data?.name || fromUserName;
           
-          // Quota check
+          // Quota check — free=3, pro=20, elite=unlimited
           const plan = data?.plan || 'free';
-          let maxConnections = 5;
-          if (plan === 'pro') maxConnections = 15;
-          if (plan === 'premium') maxConnections = 25;
+          let maxConnections = 3;
+          if (plan === 'pro') maxConnections = 20;
+          if (plan === 'elite') maxConnections = 9999;
           
           const currentMonth = new Date().toISOString().slice(0, 7);
           let connectionsThisMonth = 0;

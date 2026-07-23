@@ -22,6 +22,7 @@ import notificationRoutes from './routes/notification.routes';
 import dmRoutes from './routes/dm.routes';
 import searchRoutes from './routes/search.routes';
 import profileRoutes from './routes/profile.routes';
+import adminRoutes from './routes/admin.routes';
 import { NudgeService } from './services/ai/nudge.service';
 
 dotenv.config();
@@ -143,6 +144,7 @@ app.use('/api/humans', verifyAuth, humansRoutes);
 app.use('/api/rooms', verifyAuth, roomsRoutes);
 app.use('/api/kudos', verifyAuth, kudosRoutes);
 app.use('/api/health', verifyAuth, connectionHealthRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/builder', verifyAuth, builderRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/notifications', notificationRoutes);

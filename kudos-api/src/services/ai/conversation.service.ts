@@ -2,6 +2,7 @@ import { getGroqClient } from '../../config/groq';
 import { db, firestoreReady } from '../../config/firebase';
 import { PersonalityService, RelationshipMode } from './personality.service';
 import { MemoryService } from '../memory/memory.service';
+import { SituationExtractorService } from './situation-extractor.service';
 
 import ollama from 'ollama';
 import { SentimentService } from './sentiment.service';
@@ -104,12 +105,11 @@ export class ConversationService {
       // Always extract memories (MemoryService will handle Cloud vs Local routing)
       MemoryService.extractAndStore(userId, message, reply, localMode).catch(e => console.error('[Memory] Error:', e.message));
       
-      if (firestoreReady && !localMode) {
-        SentimentService.analyzeAndUpdateState(userId, message).catch(e => console.error('[Sentiment] Error:', e.message));
-      } else {
-        // Still run sentiment for SSE broadcast (it will skip Firestore write internally)
-        SentimentService.analyzeAndUpdateState(userId, message).catch(e => console.error('[Sentiment] Error:', e.message));
-      }
+      // Run sentiment analysis (for pet/orb state)
+      SentimentService.analyzeAndUpdateState(userId, message).catch(e => console.error('[Sentiment] Error:', e.message));
+      
+      // Run situation extraction (for intelligent matching) — background, never blocks reply
+      SituationExtractorService.extractAndUpdate(userId, message).catch(e => console.error('[SituationExtractor] Error:', e.message));
 
       return reply;
     } catch (error) {
