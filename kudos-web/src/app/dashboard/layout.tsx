@@ -8,13 +8,11 @@ import { CommandPalette } from '@/components/CommandPalette';
 
 const NAV = [
   { href: '/dashboard', icon: '🏠', label: 'Home' },
-  { href: '/dashboard/messages', icon: '💬', label: 'Messages' },
+  { href: '/dashboard/conversations', icon: '💬', label: 'Conversations' },
   { href: '/dashboard/humans', icon: '👥', label: 'Humans' },
   { href: '/dashboard/rooms', icon: '🌐', label: 'Rooms', badgeKey: 'roomsBadge' },
   { href: '/dashboard/kudos', icon: '💛', label: 'Kudos Moments', badgeKey: 'kudosBadge' },
   { href: '/dashboard/builder', icon: '🎯', label: 'Builder Tools' },
-  { href: '/dashboard/activity', icon: '⚡', label: 'Activity' },
-  { href: '/dashboard/insights', icon: '📈', label: 'Insights' },
   { href: '/dashboard/settings', icon: '⚙️', label: 'Settings' },
   { href: '/dashboard/profile', icon: '🪪', label: 'Profile' },
 ];

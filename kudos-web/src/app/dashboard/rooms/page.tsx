@@ -32,20 +32,13 @@ export default function RoomsPage() {
         if (d.userRooms?.length > 0) setActiveRoom(d.userRooms[0]);
       })
       .catch(() => {
-        const mockRooms: Room[] = [
-          { id: 'room_midnight_builders', name: 'Midnight Builders', emoji: '🌙', description: 'Solo founders who build at night when the world is quiet.', memberCount: 6, activeCount: 2, daysRemaining: 25, tags: ['builders', 'solo'], isEphemeral: true },
-          { id: 'room_founders_failed', name: 'Founders Who Failed', emoji: '🔥', description: 'A safe space for people who have shipped, broken, and learned.', memberCount: 4, activeCount: 1, daysRemaining: 20, tags: ['founders', 'failure'], isEphemeral: true },
-        ];
-        const suggested: Room[] = [
-          { id: 'room_overthinkers', name: 'Overthinkers Club', emoji: '💭', description: 'People who process life through long conversations and late nights.', memberCount: 7, activeCount: 3, daysRemaining: 28, tags: ['deep', 'thinkers'], isEphemeral: true },
-          { id: 'room_builders_midnight', name: 'Builders at Midnight', emoji: '🎯', description: 'Solo founders working on hard problems in the quiet hours.', memberCount: 5, activeCount: 0, daysRemaining: 18, tags: ['builders', 'execution'], isEphemeral: true },
-        ];
-        setUserRooms(mockRooms);
-        setSuggestedRooms(suggested);
-        setActiveRoom(mockRooms[0]);
+        // Fresh state — no fake data
+        setUserRooms([]);
+        setSuggestedRooms([]);
       })
       .finally(() => setLoading(false));
   }, [user, API_URL]);
+
 
   useEffect(() => {
     if (!activeRoom || !user) return;
@@ -54,11 +47,8 @@ export default function RoomsPage() {
     fetch(`${API_URL}/api/rooms/${activeRoom.id}/messages`, { headers })
       .then(r => r.json())
       .then(d => setMessages(d.messages || []))
-      .catch(() => setMessages([
-        { id: 'mock_1', userId: 'mock_priya', userName: 'Priya', content: 'Anyone else ship something at 2am and immediately regret it? 😅', timestamp: new Date(Date.now() - 3600000) },
-        { id: 'mock_2', userId: 'mock_arjun', userName: 'Arjun', content: 'Every single time. But then it works and you feel like a genius.', timestamp: new Date(Date.now() - 3000000) },
-        { id: 'mock_3', userId: 'mock_priya', userName: 'Priya', content: 'Exactly this. The cycle of shame-pride is real.', timestamp: new Date(Date.now() - 2400000) },
-      ]));
+      .catch(() => setMessages([]));
+
   }, [activeRoom, user, API_URL]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
