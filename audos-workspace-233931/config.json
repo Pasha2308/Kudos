@@ -1,0 +1,140 @@
+{
+  "id": "workspace-233931",
+  "name": "Kudos",
+  "description": "Workspace for Kudos",
+  "version": "3.0.0",
+  "templateVersion": 3,
+  "publicEntry": {
+    "mode": "space-email-gate",
+    "path": "/site/:configId",
+    "component": "components/EmailGate.tsx"
+  },
+  "apps": [
+    {
+      "id": "main",
+      "name": "Kudos",
+      "icon": "Heart",
+      "component": "apps/Main/App.tsx"
+    },
+    {
+      "id": "trial-simulator",
+      "name": "Trial Simulator",
+      "icon": "FlaskConical",
+      "dataFile": "data/trial-simulator.json",
+      "component": "apps/trial-simulator/App.tsx"
+    }
+  ],
+  "terminology": {
+    "reading": "loading",
+    "writing": "saving",
+    "creating": "adding",
+    "deleting": "removing",
+    "editing": "updating"
+  },
+  "desktop": {
+    "theme": {
+      "gradient": "from-[#07070f] via-[#0f0f1a] to-[#161626]",
+      "accentColor": "#6366f1",
+      "dockStyle": "glass"
+    },
+    "themeRecipe": "glass",
+    "themeTokens": {
+      "palette": {
+        "primary": "#6366f1",
+        "highlight": "#a855f7",
+        "contrast": "#f59e0b",
+        "secondary": "#a855f7",
+        "surfaces": {
+          "page": "#07070f",
+          "pageAlt": "#0f0f1a",
+          "gradientFrom": "#07070f",
+          "gradientVia": "#0f0f1a",
+          "gradientTo": "#161626",
+          "card": "#0f0f1a",
+          "panel": "#0f0f1a",
+          "muted": "#1e1e32",
+          "accentSoft": "rgba(99,102,241,0.12)",
+          "border": "rgba(255,255,255,0.07)"
+        },
+        "text": {
+          "primary": "#ffffff",
+          "secondary": "#d1d5db",
+          "brand": "#ffffff",
+          "muted": "#6b7280"
+        }
+      },
+      "typography": {
+        "headingFont": "Outfit",
+        "bodyFont": "Inter",
+        "fontFamily": "Inter, Outfit, sans-serif"
+      },
+      "shell": {
+        "accentColor": "#6366f1",
+        "dockStyle": "glass",
+        "pageBackground": "#07070f",
+        "gateBackground": "#07070f",
+        "panelBackground": "#0f0f1a",
+        "panelStrongBackground": "#161626"
+      }
+    },
+    "layout": {
+      "agentPosition": "center",
+      "dockPosition": "left",
+      "appWindowSize": "medium",
+      "defaultLandingView": "app",
+      "defaultLandingAppId": "main",
+      "customerLandsOnAgent": false
+    },
+    "branding": {
+      "name": "Kudos",
+      "tagline": "Stop Being Lonely. Start Being Real.",
+      "logoUrl": "/site/233931/assets/kudos-icon.png",
+      "headingFont": "Outfit",
+      "bodyFont": "Inter",
+      "colors": {
+        "primary": "#6366f1",
+        "highlight": "#a855f7",
+        "contrast": "#f59e0b",
+        "secondary": "#a855f7",
+        "accent": "#f59e0b",
+        "surfaces": {
+          "page": "#07070f",
+          "pageAlt": "#0f0f1a",
+          "gradientFrom": "#07070f",
+          "gradientVia": "#0f0f1a",
+          "gradientTo": "#161626",
+          "card": "#0f0f1a",
+          "panel": "#0f0f1a",
+          "muted": "#1e1e32",
+          "accentSoft": "rgba(99,102,241,0.12)",
+          "border": "rgba(255,255,255,0.07)"
+        },
+        "text": {
+          "primary": "#ffffff",
+          "secondary": "#d1d5db",
+          "brand": "#ffffff",
+          "muted": "#6b7280"
+        }
+      },
+      "palette": {
+        "primary": "#6366f1",
+        "highlight": "#a855f7",
+        "contrast": "#f59e0b",
+        "secondary": "#a855f7"
+      }
+    }
+  },
+  "cdnDependencies": {
+    "remark-gfm": {
+      "version": "4.0.0"
+    }
+  },
+  "agent": {
+    "welcomeMessage": "Hi! I'm your Kudos companion. I can help you connect with real humans, reflect on your day, and navigate warm intros.",
+    "starterPrompts": [
+      "Open my companion chat",
+      "Who might I meet on Kudos?",
+      "Show my connection health"
+    ]
+  }
+}

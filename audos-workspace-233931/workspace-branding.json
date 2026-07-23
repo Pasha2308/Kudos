@@ -1,0 +1,146 @@
+{
+  "name": "Kudos",
+  "tagline": "AI-powered workspace",
+  "businessPlan": "",
+  "colors": {
+    "primary": "#0891b2",
+    "highlight": "#f43f5e",
+    "contrast": "#06d6a0",
+    "secondary": "#f43f5e",
+    "accent": "#06d6a0",
+    "primaryScale": {
+      "50": "#ebf6f9",
+      "100": "#d7edf3",
+      "200": "#bae0e9",
+      "500": "#0785a4",
+      "600": "#0891b2",
+      "700": "#077a96",
+      "900": "#056075"
+    },
+    "highlightScale": {
+      "50": "#fef0f2",
+      "100": "#fde0e5",
+      "200": "#fcc9d2",
+      "500": "#e03a56",
+      "600": "#f43f5e",
+      "700": "#cd354f",
+      "900": "#a12a3e"
+    },
+    "surfaces": {
+      "page": "#f3fafb",
+      "pageAlt": "#e6fbf6",
+      "gradientFrom": "#f3fafb",
+      "gradientVia": "#e6fbf6",
+      "gradientTo": "#fef2f4",
+      "card": "#ffffff",
+      "cardHover": "#f5fbfc",
+      "panel": "#ffffff",
+      "panelStrong": "#ffffff",
+      "muted": "#fafdfd",
+      "accentSoft": "#feecef",
+      "border": "#c9e7ee",
+      "borderStrong": "#abdae5"
+    },
+    "text": {
+      "primary": "#022932",
+      "secondary": "#044e60",
+      "brand": "#022932",
+      "accent": "#44121a",
+      "muted": "#06667d",
+      "onPrimary": "#111827",
+      "onHighlight": "#111827",
+      "onContrast": "#111827"
+    },
+    "semantic": {
+      "success": "#16a34a",
+      "warning": "#d97706",
+      "danger": "#dc2626"
+    },
+    "shell": {
+      "buttonText": "#111827",
+      "accentButtonText": "#111827",
+      "dockText": "#111827",
+      "icon": "#44121a",
+      "shadow": "#b5dee8",
+      "shadowStrong": "#92cfdd"
+    }
+  },
+  "palette": {
+    "primary": "#0891b2",
+    "highlight": "#f43f5e",
+    "contrast": "#06d6a0",
+    "secondary": "#f43f5e",
+    "accent": "#06d6a0",
+    "primaryScale": {
+      "50": "#ebf6f9",
+      "100": "#d7edf3",
+      "200": "#bae0e9",
+      "500": "#0785a4",
+      "600": "#0891b2",
+      "700": "#077a96",
+      "900": "#056075"
+    },
+    "highlightScale": {
+      "50": "#fef0f2",
+      "100": "#fde0e5",
+      "200": "#fcc9d2",
+      "500": "#e03a56",
+      "600": "#f43f5e",
+      "700": "#cd354f",
+      "900": "#a12a3e"
+    },
+    "surfaces": {
+      "page": "#f3fafb",
+      "pageAlt": "#e6fbf6",
+      "gradientFrom": "#f3fafb",
+      "gradientVia": "#e6fbf6",
+      "gradientTo": "#fef2f4",
+      "card": "#ffffff",
+      "cardHover": "#f5fbfc",
+      "panel": "#ffffff",
+      "panelStrong": "#ffffff",
+      "muted": "#fafdfd",
+      "accentSoft": "#feecef",
+      "border": "#c9e7ee",
+      "borderStrong": "#abdae5"
+    },
+    "text": {
+      "primary": "#022932",
+      "secondary": "#044e60",
+      "brand": "#022932",
+      "accent": "#44121a",
+      "muted": "#06667d",
+      "onPrimary": "#111827",
+      "onHighlight": "#111827",
+      "onContrast": "#111827"
+    },
+    "semantic": {
+      "success": "#16a34a",
+      "warning": "#d97706",
+      "danger": "#dc2626"
+    },
+    "shell": {
+      "buttonText": "#111827",
+      "accentButtonText": "#111827",
+      "dockText": "#111827",
+      "icon": "#44121a",
+      "shadow": "#b5dee8",
+      "shadowStrong": "#92cfdd"
+    }
+  },
+  "typography": {
+    "font": "Inter",
+    "category": "sans-serif",
+    "weights": [
+      400,
+      500,
+      600,
+      700
+    ]
+  },
+  "iconUrl": null,
+  "logoUrl": null,
+  "heroVideoUrl": null,
+  "workspaceId": "3e08f220-e7eb-4fdd-82df-deb7ee8ca1b2",
+  "configId": 233931
+}
