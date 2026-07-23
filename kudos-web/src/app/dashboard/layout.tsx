@@ -52,8 +52,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ─── Sidebar ─── */}
       <aside className="sidebar">
         {/* Logo */}
-        <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div className="companion-orb companion-orb-sm" />
+        <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img src="/kudos-logo.png" alt="Kudos Logo" style={{ width: 32, height: 32, objectFit: 'contain' }} />
           <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.25rem', fontWeight: 800 }}>Kudos</span>
         </div>
 

@@ -39,7 +39,6 @@ export default function ConversationsPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [mode, setMode] = useState('support');
 
   // AI settings panel
   const [showSettings, setShowSettings] = useState(false);
@@ -136,7 +135,7 @@ export default function ConversationsPage() {
         const r = await fetch(`${API_URL}/api/chat/send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user?.token}` },
-          body: JSON.stringify({ message: text, mode }),
+          body: JSON.stringify({ message: text, mode: aiSettings.style }),
         });
         const d = await r.json();
         const replyText = d.reply || d.response || d.message;
@@ -243,18 +242,7 @@ export default function ConversationsPage() {
               <p style={{ fontSize: '0.75rem', color: '#aaa', margin: 0 }}>{isAI ? 'Your private AI companion' : activeConvo.isOnline ? '● Online' : 'Offline'}</p>
             </div>
 
-            {/* Mode chips for AI only */}
-            {isAI && (
-              <div style={{ display: 'flex', gap: 6 }}>
-                {MODES.map(m => (
-                  <button key={m.id} onClick={() => setMode(m.id)} style={{
-                    padding: '5px 12px', borderRadius: 999, border: `1.5px solid ${mode === m.id ? '#f9a8d4' : '#e5e5e5'}`,
-                    background: mode === m.id ? '#fff5f7' : 'transparent', fontSize: '0.8125rem', fontWeight: 600,
-                    color: mode === m.id ? '#f43f5e' : '#888', cursor: 'pointer', transition: 'all 0.12s',
-                  }}>{m.label}</button>
-                ))}
-              </div>
-            )}
+
 
             {/* Settings + Memory icons for AI */}
             {isAI && (

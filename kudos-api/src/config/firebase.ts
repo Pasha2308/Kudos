@@ -60,14 +60,51 @@ class MockDoc {
     }
     this.writeDb(db);
   }
+
+  collection(name: string) {
+    return new MockCollection(`${this.collectionName}_${this.docId}_${name}`);
+  }
 }
 
 class MockCollection {
+  private filters: any[] = [];
+  private limitCount: number = 20;
+
   constructor(public name: string) {}
+
   doc(id: string) { return new MockDoc(this.name, id); }
+
+  where(field: string, op: string, val: any) {
+    this.filters.push({ field, op, val });
+    return this;
+  }
+
+  limit(count: number) {
+    this.limitCount = count;
+    return this;
+  }
+
   async get() {
-    // Simple mock for getting all docs if needed (not fully robust but stops crashes)
-    return { empty: true, docs: [] };
+    const localDbPath = path.resolve(process.cwd(), './local-db.json');
+    let db: any = {};
+    if (fs.existsSync(localDbPath)) {
+      db = JSON.parse(fs.readFileSync(localDbPath, 'utf8'));
+    }
+    const col = db[this.name] || {};
+    let docs = Object.keys(col).map(id => ({
+      id,
+      data: () => col[id]
+    }));
+
+    for (const f of this.filters) {
+      if (f.op === '==') {
+        docs = docs.filter(d => d.data()[f.field] === f.val);
+      }
+    }
+
+    docs = docs.slice(0, this.limitCount);
+
+    return { empty: docs.length === 0, docs };
   }
 }
 

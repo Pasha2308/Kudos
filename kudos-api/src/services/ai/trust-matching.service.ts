@@ -76,9 +76,7 @@ Write a single, warm, honest sentence (max 25 words) explaining to User A why th
    * against other verified users. Returns max 5 intros per call.
    */
   static async findPotentialIntros(userId: string): Promise<any[]> {
-    if (!firestoreReady) {
-      return TrustMatchingService.getMockIntros(userId);
-    }
+
 
     try {
       const userDoc = await db.collection('users').doc(userId).get();
